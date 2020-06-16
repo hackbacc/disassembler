@@ -66,3 +66,7 @@ xxxxxxx                                xxxxxxx               oooxxxx   xxxxxxx
 http://employees.oneonta.edu/higgindm/assembly/video_games.htm
 http://www.skynet.ie/~darkstar/assembler/tut6.html
 http://www.wagemakers.be/english/doc/vga
+http://www.gabrielececchetti.it/Teaching/CalcolatoriElettronici/Docs/i8086_and_DOS_interrupts.pdf
+https://wiki.osdev.org/Drawing_In_Protected_Mode#Locating_Video_Memory
+https://wiki.osdev.org/Printing_to_Screen
+http://mikeos.sourceforge.net/write-your-own-os.html
