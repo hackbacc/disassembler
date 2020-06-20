@@ -70,3 +70,7 @@ http://www.gabrielececchetti.it/Teaching/CalcolatoriElettronici/Docs/i8086_and_D
 https://wiki.osdev.org/Drawing_In_Protected_Mode#Locating_Video_Memory
 https://wiki.osdev.org/Printing_to_Screen
 http://mikeos.sourceforge.net/write-your-own-os.html
+https://www.codeproject.com/Articles/664165/Writing-a-boot-loader-in-Assembly-and-C-Part
+http://faydoc.tripod.com/cpu/ Special directives
+https://www.glamenv-septzen.net/en/view/6 why 0x7C00
+http://www.ctyme.com/intr/int.htm interrupts all
