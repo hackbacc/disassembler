@@ -74,3 +74,4 @@ https://www.codeproject.com/Articles/664165/Writing-a-boot-loader-in-Assembly-an
 http://faydoc.tripod.com/cpu/ Special directives
 https://www.glamenv-septzen.net/en/view/6 why 0x7C00
 http://www.ctyme.com/intr/int.htm interrupts all
+https://montcs.bloomu.edu/Information/LowLevel/assembly64.pdf macro labels %%

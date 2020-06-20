@@ -1,5 +1,4 @@
 org 0x7C00
-;call debug
 ;--------------------- 0x0
 ;| Interrupts vectors
 ;--------------------- 0x400
