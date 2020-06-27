@@ -23,7 +23,6 @@ wait_:
 mov ah, 0x01
 int 16h
 ;
-; print msg2, len2, 10, 10
 JZ wait_
 
 cmp al, 'a'

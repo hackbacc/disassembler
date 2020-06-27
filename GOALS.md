@@ -1,6 +1,6 @@
 # GOALS
-1. Draw player ships and move it using  
-WASD keys.
+1. Draw player ships and move it 
+using WASD keys.
 2. Draw enemy ships likewise but
 with random 
 movement.
@@ -13,3 +13,4 @@ arguments to functions !!
 
 # OFF stream stuff
 1. Install bochs
+

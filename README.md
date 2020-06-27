@@ -75,3 +75,11 @@ http://faydoc.tripod.com/cpu/ Special directives
 https://www.glamenv-septzen.net/en/view/6 why 0x7C00
 http://www.ctyme.com/intr/int.htm interrupts all
 https://montcs.bloomu.edu/Information/LowLevel/assembly64.pdf macro labels %%
+
+https://wiki.osdev.org/Interrupt_Vector_Table IVT
+https://nasm.us/doc/nasmdoc0.html HOLY GRAIL OF ASM LANG
+https://www.daniweb.com/programming/software-development/threads/256108/problem-with-nasm-s-times-directive why remove .section segments
+https://0x00sec.org/t/realmode-assembly-writing-bootable-stuff-part-1/2901 this awesome tutorial
+
+https://www.partitionwizard.com/help/what-is-chs.html Cylinder-head-sector
+https://www.pngfind.com/pngs/m/189-1896680_galaga-galaga-ship-hd-png-download.png
