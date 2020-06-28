@@ -85,3 +85,10 @@ https://www.partitionwizard.com/help/what-is-chs.html Cylinder-head-sector
 https://www.pngfind.com/pngs/m/189-1896680_galaga-galaga-ship-hd-png-download.png
 https://thestarman.pcministry.com/linux/bochsrc.bxrc.htm # bochs src file
 https://www.cs.princeton.edu/courses/archive/fall06/cos318/precepts/bochs_tutorial.html # bochs startup setup tutorial
+
+* structures
+https://www.d.umn.edu/~gshute/asm/data-structures.xhtml 
+https://www.csee.umbc.edu/courses/undergraduate/313/spring05/burt_katz/lectures/Lect10/structuresInAsm.html
+
+* Timer IVT 1Ch
+http://www.gpcet.ac.in/wp-content/uploads/2018/03/mpi-1-22.pdf

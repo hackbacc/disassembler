@@ -1,8 +1,10 @@
 from PIL import Image
 from math import sqrt
+import subprocess
 
 IMG_NAME = 'ship.png'
 
+subprocess.check_output('rm -rf '+IMG_NAME.split('.')[0]+'.bin',shell=1)
 colors = Image.open('colors.png')
 colors_ = colors.load()
 
@@ -45,6 +47,10 @@ for y in range(img.height):
 
         with open(IMG_NAME.split('.')[0]+'.bin', 'ab') as f:
             w = bytearray([smallest_ind&0xFF])
+            f.write(bytearray(w))
+
+        with open(IMG_NAME.split('.')[0]+'.bina', 'ab') as f:
+            w = bytearray([ord('a')&0xFF])
             f.write(bytearray(w))
 
 

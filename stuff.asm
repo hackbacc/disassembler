@@ -4,19 +4,27 @@ org 0x8000
 %define WIDTH 320
 %define HEIGHT 200
 %define CUSTOM_IMAGE_SIZE 20 ; 20x20 images only
-%define BG_COLOR 0x00
+%define BG_COLOR 0xF
 %define BULLET_LENGTH 0x05
+
+struc Player
+    .ship_x: resw 1
+    .ship_y: resw 1
+    ; .fire_rate: resb 1
+    ; .bullet_xy: resw 10
+    ; .bullet_index: resb 1
+endstruc
 
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
+; init 320x200 with 256 colors video mode
 mov ah, 0x00
 mov al, 0x13
 int 0x10
 
 mov es, word [GRAPHIC_MEM_A]
 
-
-
+call fill_screen
 mega_loop:
     pusha
 
@@ -58,7 +66,7 @@ STD
 rep stosb
 
 ; remove ship
-mov di, 0x0000
+mov di, BG_COLOR
 call draw_ship
 
 ; check ks
@@ -104,12 +112,11 @@ draw_ship:
     imul ax, WIDTH
     add di, ax
     push di
-
+    
     ; add fire!!
-;     mov cx, len
-;     shr cx, 1
-;
-;     add di, cx
+    ; add di, CUSTOM_IMAGE_SIZE/2
+    ; mov [player + Player.bullet_xy], word di
+    ; inc byte [player + Player.bullet_index]
 ;     mov cx, BULLET_LENGTH
 ;
 ; loop__:
@@ -119,7 +126,7 @@ draw_ship:
 
     pop di
 
-    mov cx, len
+    mov cx, 400
     mov si, test_image
     mov dx, 0
         ;lodsb ; load byte from [si] to al, inc si
@@ -128,17 +135,17 @@ draw_ship:
     loop_:
         pop ax
         push ax
-        CMP ax, 0x00
+        CMP ax, BG_COLOR
         JZ dont_load
         lodsb ; load byte from [si] to al, inc si
         dont_load:
 
 cmp dx, CUSTOM_IMAGE_SIZE ; works for 20x20 images
-        JNZ here
+        JL same_row
         add di, WIDTH
         sub di, dx
         xor dx, dx
-    here:
+    same_row:
         CLD
         inc dx
         stosb ; save byte from al to [di], inc di
@@ -149,23 +156,29 @@ cmp dx, CUSTOM_IMAGE_SIZE ; works for 20x20 images
     pop di
     ret
 
+fill_screen:
+    xor di, di
+    mov cx, WIDTH*HEIGHT
+    mov al, BG_COLOR
+    rep stosb
+    ret
+
 ; no code execution after this
 ; bss and data segments
 exit:
-
-struc Player
-    .ship_x: resw 1
-    .ship_y: resw 1
-    .fire_rate: resb 1
-endstruc
 
 player:
 istruc Player
     at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
     at Player.ship_y, dw ( HEIGHT/2 - CUSTOM_IMAGE_SIZE/2 )
-    at Player.fire_rate, db 1
+    ; at Player.fire_rate, db 1
+    ; at Player.bullet_xy, dw 10
+;    at Player.bullet_index, db 0
 iend
 
-test_image incbin "ship.bin"
+;times 200 db 1
+
+test_image: incbin "ship.bin"  ; needs to be at the top of .bss/data section idk why
 len EQU $-test_image
+
 times 512*3 - ($-$$) db 0

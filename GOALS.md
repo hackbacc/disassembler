@@ -10,6 +10,8 @@ movement.
 Stream day 4 - Cannot pass 
 arguments to functions !!
 
+Stream day 11 - incbin bin code is overwritten somehow
+
 
 # OFF stream stuff
 1. Install bochs
