@@ -7,12 +7,13 @@ colors = Image.open('colors.png')
 colors_ = colors.load()
 
 colors_array = []
-for x in range(colors.width):
-    for y in range(colors.height):
+for y in range(colors.height):
+    for x in range(colors.width):
         colors_array.append(colors_[x, y])
 
 img = Image.open(IMG_NAME)
-img = img.resize((20, 32))
+img = img.resize((20, 20))
+img.show()
 img_ = img.load()
 # for x in range(img.width):
 #     for y in range(img.height):
@@ -27,8 +28,10 @@ def rms(a, b):
 
 out = bytearray()
 
-for x in range(img.width):
-    for y in range(img.height):
+    #x = img.width - 1 - x
+for y in range(img.height):
+    for x in range(img.width):
+    #    y = img.height - 1 - y
         smallest = 0xFFFFFFF
         smallest_ind = None
         for i in range(colors.height * colors.width):
@@ -38,8 +41,10 @@ for x in range(img.width):
                 smallest = rms_
                 smallest_ind = i
         print(x, y, smallest_ind)
-        out.append(smallest_ind)
+        #out.append(smallest_ind)
 
-with open(IMG_NAME.split('.')[0]+'.bin', 'wb') as f:
-    f.write(out)
+        with open(IMG_NAME.split('.')[0]+'.bin', 'ab') as f:
+            w = bytearray([smallest_ind&0xFF])
+            f.write(bytearray(w))
+
 

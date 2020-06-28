@@ -83,3 +83,5 @@ https://0x00sec.org/t/realmode-assembly-writing-bootable-stuff-part-1/2901 this 
 
 https://www.partitionwizard.com/help/what-is-chs.html Cylinder-head-sector
 https://www.pngfind.com/pngs/m/189-1896680_galaga-galaga-ship-hd-png-download.png
+https://thestarman.pcministry.com/linux/bochsrc.bxrc.htm # bochs src file
+https://www.cs.princeton.edu/courses/archive/fall06/cos318/precepts/bochs_tutorial.html # bochs startup setup tutorial
