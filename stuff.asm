@@ -22,7 +22,7 @@ mega_loop:
     pusha
 
 ; delay
-    MOV     CX, 0 ;0FH
+    MOV     CX, 0xF ;0FH
     MOV     DX, 4240H
     MOV     AH, 86H
     INT     15H
@@ -63,8 +63,8 @@ mov di, BG_COLOR
 call draw_ship
 
 ; remove bullets
-push BG_COLOR
-call draw_bullets
+; mov al, 0x03;BG_COLOR
+; call draw_bullets
 
 ; check ks
 mov ah, 0x01
@@ -99,15 +99,41 @@ ks_na:
 mov di, 0xFFFF
 call draw_ship
 
-mov cx, [player + Player.bullet_index]
-mov si, player + Player.bullet_xy
-draw_bullets_loop1:
-    lodsw
-    sub [si], word WIDTH
-    loop draw_bullets_loop1
+JMP nope
 
-; mov al, 0x04
-; call draw_bullets
+mov si, [player + Player.bullet_index]
+;sub [player + Player.bullet_xy], word WIDTH
+;mov si, player + Player.bullet_xy
+cmp si, 0
+JMP nope
+draw_bullets_loop1:
+    dec si
+    cmp [player + Player.bullet_xy + si], word WIDTH
+    JL nope
+    sub [player + Player.bullet_xy + si], word WIDTH
+    cmp si, 0
+    jnz draw_bullets_loop1
+
+nope:
+
+mov al, 0x03
+call draw_bullets
+
+; cmp 2, [player + Player.bullet_index]
+; JNZ exit
+
+; mov [player + Player.bullet_xy], word 1 + 320*10
+; mov [player + Player.bullet_xy + 16], word 1 + 320*15
+; mov [player + Player.bullet_xy + 32], word 1 + 320*20
+; mov [player + Player.bullet_index], word 48
+
+
+;inc word [player + Player.bullet_index]
+;mov [player + Player.bullet_index], si
+
+mov al, 0x04
+call draw_bullets
+
 popa
 JMP mega_loop
 
@@ -122,22 +148,21 @@ draw_ship:
     
     ; add fire!!
     add di, CUSTOM_IMAGE_SIZE/2
-    mov [player + Player.bullet_xy], word di
-    inc byte [player + Player.bullet_index]
-;     mov cx, BULLET_LENGTH
-;
-; loop__:
-;     sub di, WIDTH
-;     mov [es:di],byte 0x04
-;     loop loop__
+    mov si, [player + Player.bullet_index]
+    mov [player + Player.bullet_xy + si], word di
 
+; inc word [player + Player.bullet_index]
+;     mov [player + Player.bullet_index], si
+
+    add [player + Player.bullet_index], word 16
+;    mov [player + Player.bullet_index], ax
+;    movi [player + Player.bullet_index]
+    
     pop di
 
     mov cx, 400
     mov si, test_image
     mov dx, 0
-        ;lodsb ; load byte from [si] to al, inc si
-        ;lodsb ; load byte from [si] to al, inc si
     CLD
     loop_:
         pop ax
@@ -165,25 +190,35 @@ cmp dx, CUSTOM_IMAGE_SIZE ; works for 20x20 images
 
 ; Draw bullets
 draw_bullets:
+;    push bx
 ;    pusha
-    mov cx, [player + Player.bullet_index]
-    mov si, player + Player.bullet_xy
+
+; mov di, [player + Player.bullet_xy]
+; mov [es:di], byte 0x04
+; ret
+
+    mov si, [player + Player.bullet_index]
+    cmp si, 0
+    JZ draw_bullets_ret
+
+;    mov si, player + Player.bullet_xy
 draw_bullets_loop:
-    lodsw
+;    dec word si
+    sub si, 16
+    mov di, [player + Player.bullet_xy + si]
+
     mov bx, BULLET_LENGTH
-    mov di, ax ; contains xy coor
-loop1:
-    pop ax
-    push ax
-    mov ah, 0x00
+make_bullet:
     mov [es:di], byte al
-    sub di, WIDTH
+    ; sub di, WIDTH
     dec bx
     cmp bx, 0
-    JNZ loop1
+    JNZ make_bullet
 
-    loop draw_bullets_loop
+    cmp si, 0
+    JNZ draw_bullets_loop
 
+draw_bullets_ret:
 ;    popa
     ret
 
@@ -202,8 +237,8 @@ struc Player
     .ship_x: resw 1
     .ship_y: resw 1
     ; .fire_rate: resb 1
-    .bullet_xy: times 10 resw 1
-    .bullet_index: resb 1
+    .bullet_xy: times 100 resw 1
+    .bullet_index: resw 1 ;resb wont work
 endstruc
 
 player:
@@ -211,8 +246,8 @@ istruc Player
     at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
     at Player.ship_y, dw ( HEIGHT/2 - CUSTOM_IMAGE_SIZE/2 )
     ; at Player.fire_rate, db 1
-    at Player.bullet_xy, times 10 dw 1
-    at Player.bullet_index, db 0
+    at Player.bullet_xy, times 100 dw 0
+    at Player.bullet_index, dw 0  ; b wont work
 iend
 
 ;times 200 db 1
