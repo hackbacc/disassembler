@@ -16,3 +16,7 @@ Stream day 11 - incbin bin code is overwritten somehow
 # OFF stream stuff
 1. Install bochs
 
+# Lesson Learned
+overflow of times data - go through entire codebase, other bootloader files too!!
+bullet indexing - RTFM clearly!!
+
