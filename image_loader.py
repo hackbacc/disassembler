@@ -2,7 +2,7 @@ from PIL import Image
 from math import sqrt
 import subprocess
 
-IMG_NAME = 'ship.png'
+IMG_NAME = 'enemy_ship.png'
 
 subprocess.check_output('rm -rf '+IMG_NAME.split('.')[0]+'.bin',shell=1)
 colors = Image.open('colors.png')

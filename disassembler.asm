@@ -22,7 +22,7 @@ mega_loop:
     pusha
 
 ; delay
-    MOV     CX, 0x08 ;0FH
+    MOV     CX, 0x00 ;0FH
     MOV     DX, 4240H
     MOV     AH, 86H
     INT     15H
@@ -106,87 +106,28 @@ mov si, [player + Player.bullet_index]
 cmp si, 0
 JZ nope
 
-;bullets forward
+;move bullets
 mov si, 0
 draw_bullets_loop1:
-    sub [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
+    cmp [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
+    JGE draw_bullets_sub
 
+    mov di, [player + Player.bullet_index]
+    mov di, [player + Player.bullet_xy + di - 2]
+    mov [player + Player.bullet_xy +si], di
+    sub word [player + Player.bullet_index], 2
+    cmp word [player + Player.bullet_index], 0
+    JZ nope
+    cmp [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
+    JL draw_bullets_loop1
+
+draw_bullets_sub: 
+    sub [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
     add word si, 2
     cmp si, [player + Player.bullet_index]
     JL draw_bullets_loop1
 
 nope:
-
-; mov al, 0x03
-; call draw_bullets
-
-; cmp [player + Player.bullet_index], word 2
-; JNZ exit
-
-
-; mov [player + Player.bullet_xy], word 1 + 320*10
-; mov [player + Player.bullet_xy + 0x10], word 1 + 320*15
-; mov [player + Player.bullet_xy + 0x20], word 1 + 320*20
-; mov [player + Player.bullet_index], word 0x30
-;
-
-; mov eax, player + Player.bullet_xy
-; add eax, 0
-; mov [eax], word 1 + 320*10
-; mov eax, player + Player.bullet_xy
-; add eax, 2
-; mov [eax], word 1 + 320*15
-; mov eax, player + Player.bullet_xy
-; add eax, 4
-; mov [eax], word 1 + 320*20
-; mov [player + Player.bullet_index], word 6
-
-; mov si,0
-; mov ax, [player + Player.bullet_xy]
-; mov ax, [ax]
-; mov word [ax+si], 1 ;+ 200*14
-; inc si
-; mov ax, [player + Player.bullet_xy+si]
-; mov word ax, 3 ;+ 200*15
-; inc si
-; mov ax, [player + Player.bullet_xy+si]
-; mov word ax, 5 ; + 200*20
-; mov word [player + Player.bullet_index], 3
-
-; mov eax, [player + Player.bullet_xy]
-; add  eax, 0
-; mov [eax], word 1 + 320*10
-; mov eax, [player + Player.bullet_xy]
-; add  eax, 1
-; mov [eax], word 1 + 320*15
-; mov eax, [player + Player.bullet_xy]
-; add  eax, 2
-; mov [eax], word 1 + 320*20
-; mov [player + Player.bullet_index], word 3
-
-
-;
-; mov si, [player + Player.bullet_index]
-; aaaa:
-; ;    dec si
-;
-;     sub word si, 2; 0x10
-;     ;dec cx
-;  ;   inc eax
-; ;    mov eax, [player + Player.bullet_xy]
-; ;    add ax, si 
-;     mov di, [player + Player.bullet_xy +si]
-;     mov [es:di], byte 0x04
-;
-;     ;inc word si    
-;     cmp si, 0 ; [player + Player.bullet_index]
-;     JNZ aaaa
-
-
-
-
-;inc word [player + Player.bullet_index]
-;mov [player + Player.bullet_index], si
 
 mov al, 0x04
 call draw_bullets
@@ -205,18 +146,9 @@ draw_ship:
     
     ; add fire!!
     add di, CUSTOM_IMAGE_SIZE/2
-mov si, [player + Player.bullet_index]
-mov word [player + Player.bullet_xy + si], di
-add word [player + Player.bullet_index], 2
-    ; mov si, [player + Player.bullet_index]
-    ; mov [player + Player.bullet_xy + si], word di
-
-; inc word [player + Player.bullet_index]
-;     mov [player + Player.bullet_index], si
-
-    ; add [player + Player.bullet_index], word 16
-;    mov [player + Player.bullet_index], ax
-;    movi [player + Player.bullet_index]
+    mov si, [player + Player.bullet_index]
+    mov word [player + Player.bullet_xy + si], di
+    add word [player + Player.bullet_index], 2
     
     pop di
 
@@ -265,8 +197,14 @@ draw_bullets_loop:
 
     mov bx, BULLET_LENGTH
 make_bullet:
+    ; cmp di, 0
+    ; JL dont_make_bullet
+    cmp di, 0
+    JE dont_make_bullet
     mov [es:di], byte al
-    sub di, WIDTH
+    dont_make_bullet:
+
+sub di, WIDTH
 
     dec bx
     cmp bx, 0
@@ -310,7 +248,7 @@ iend
 
 ;times 200 db 1
 
-test_image: incbin "ship.bin"  ; needs to be at the top of .bss/data section idk why
+test_image: incbin "enemy_ship.bin"  ; needs to be at the top of .bss/data section idk why
 len EQU $-test_image
 
 times 512*8 - ($-$$) db 0
