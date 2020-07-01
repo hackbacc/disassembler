@@ -22,7 +22,7 @@ mega_loop:
     pusha
 
 ; delay
-    MOV     CX, 0x08 ;0FH
+    MOV     CX, 0x00 ;0FH
     MOV     DX, 4240H
     MOV     AH, 86H
     INT     15H
@@ -109,6 +109,18 @@ JZ nope
 ;bullets forward
 mov si, 0
 draw_bullets_loop1:
+    cmp [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
+    JG draw_bullets_sub
+    sub word [player + Player.bullet_index], 2
+    mov di, [player + Player.bullet_index]
+    cmp di, 0
+    JZ nope
+    mov di, [player + Player.bullet_xy + di - 2]
+    mov [player + Player.bullet_xy +si], di
+    cmp [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
+    JL draw_bullets_loop1
+
+draw_bullets_sub: 
     sub [player + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2
 
     add word si, 2
@@ -205,18 +217,9 @@ draw_ship:
     
     ; add fire!!
     add di, CUSTOM_IMAGE_SIZE/2
-mov si, [player + Player.bullet_index]
-mov word [player + Player.bullet_xy + si], di
-add word [player + Player.bullet_index], 2
-    ; mov si, [player + Player.bullet_index]
-    ; mov [player + Player.bullet_xy + si], word di
-
-; inc word [player + Player.bullet_index]
-;     mov [player + Player.bullet_index], si
-
-    ; add [player + Player.bullet_index], word 16
-;    mov [player + Player.bullet_index], ax
-;    movi [player + Player.bullet_index]
+    mov si, [player + Player.bullet_index]
+    mov word [player + Player.bullet_xy + si], di
+    add word [player + Player.bullet_index], 2
     
     pop di
 
@@ -265,8 +268,14 @@ draw_bullets_loop:
 
     mov bx, BULLET_LENGTH
 make_bullet:
+    ; cmp di, 0
+    ; JL dont_make_bullet
+    cmp di, 0
+    JE dont_make_bullet
     mov [es:di], byte al
-    sub di, WIDTH
+    dont_make_bullet:
+
+sub di, WIDTH
 
     dec bx
     cmp bx, 0
@@ -310,7 +319,7 @@ iend
 
 ;times 200 db 1
 
-test_image: incbin "ship.bin"  ; needs to be at the top of .bss/data section idk why
+test_image: incbin "enemy_ship.bin"  ; needs to be at the top of .bss/data section idk why
 len EQU $-test_image
 
 times 512*8 - ($-$$) db 0
