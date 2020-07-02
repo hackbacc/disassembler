@@ -1,4 +1,4 @@
-from PIL import Image
+from PIL import Image, ImageOps
 from math import sqrt
 import subprocess
 
@@ -15,6 +15,8 @@ for y in range(colors.height):
 
 img = Image.open(IMG_NAME)
 img = img.resize((20, 20))
+img = ImageOps.flip(img)
+
 img.show()
 img_ = img.load()
 # for x in range(img.width):
