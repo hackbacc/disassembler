@@ -127,6 +127,12 @@ mov bx, player
 mov dx, 0  ; bullets upward
 call move_bullets
 
+mov si, player
+mov bx, enemy
+call bullet_collison
+push di
+
+; DRAWING STUFF
 mov al, 0x04
 mov bx, player
 call draw_bullets
@@ -135,12 +141,14 @@ mov al, 0x04
 mov bx, enemy
 call draw_bullets
 
-mov di, 0xFFFF
+;mov di, 0xFFFF
+pop di
 mov bx, enemy 
 mov dx, enemy_ship_image
 call draw_ship
 
-mov di, 0xFFFF
+;mov di, 0xFFFF
+pop di
 mov bx, player; 
 mov dx, player_ship_image
 call draw_ship
@@ -192,7 +200,12 @@ draw_ship:
     ; pusha
     ; param bx stores structure
     ; param dx stores image
+    ; param di makes color  == BG_COLOR if it is BG COLOR
     push di
+    cmp byte [bx + Player.draw], 0
+    JNE yes_draw
+    ret
+yes_draw:
     xor di, di
     add di, [bx + Player.ship_x]
     mov ax, [bx + Player.ship_y]
@@ -283,37 +296,57 @@ fill_screen:
     ; popa
     ret
 
-; bullet_collison:
-;     ; cx param stores, player struc of attacker
-;     ; bx param stores, player struc of victim
-;     ; returns cx, 0 == no hit, 1 == hit
-;     mov di, player
-;     mov bx, enemy
-;
-;     mov si, 0 ;[ax + Player.bullet_index]
-;     cmp si, [di + Player.bullet_index]
-;     JNE do
-;     ret ; no_collison
-;
-;     do:
-;         div [ax + Player.bullet_xy + si], WIDTH ; ax Y dx X
-;         cmp dx, [bx + Player.ship_x]
-;         JG nope
-;         add dx, CUSTOM_IMAGE_SIZE
-;         cmp dx, [bx + Player.ship_x]
-;         JL nope
-;         cmp ax, [bx + Player.ship_y]
-;         JL nope
-;         add ax, CUSTOM_IMAGE_SIZE
-;         cmp ax, [bx + Player.ship_y]
-;         JG nope
-;         
-;         ret ; collison
-;         nope:
-;         add si, 2
-;         cmp si, [di + Player.bullet_index]
-;         JL do
-;         ret ; no collison
+;JMP exit
+bullet_collison:
+    ; si param stores, player struc of attacker
+    ; bx param stores, player struc of victim
+    ; returns di, 0 == no hit, 1 == hit
+    push bp
+    mov bp, si
+
+
+    ; check if no bullets
+    mov si, 0 ;[ax + Player.bullet_index]
+    cmp si, [di + Player.bullet_index]
+    JNE do
+    pop bp
+    mov di, 0xFFFF
+    ret ; no_collison
+
+    do:
+        mov ax, [bp + Player.bullet_xy + si] ;, WIDTH ; ax Y dx X
+;        push cx
+        mov cx, WIDTH
+        div cx
+        ;ax has y, dx has x
+
+        cmp dx, [bx + Player.ship_x]
+        JL nope
+        add dx, CUSTOM_IMAGE_SIZE
+
+        cmp dx, [bx + Player.ship_x]
+        JG nope
+
+        cmp ax, [bx + Player.ship_y]
+        JL nope
+        add ax, CUSTOM_IMAGE_SIZE
+
+        cmp ax, [bx + Player.ship_y]
+        JG nope
+
+        pop bp
+        mov di, BG_COLOR
+        ;mov byte [bx + Player.draw], 0
+        ret ; collison
+
+nope:
+        add si, 2
+        cmp si, [di + Player.bullet_index]
+        JL do
+
+        pop bp
+        mov di, 0xFFFF
+        ret ; no collison
 
 ; no code execution after this
 ; bss and data segments
@@ -327,6 +360,7 @@ struc Player
     ; .fire_rate: resb 1
     .bullet_xy: times 100 resw 1
     .bullet_index: resw 1 ;resb wont work
+    .draw: resb 1
     ; .ship_image: resb CUSTOM_IMAGE_SIZE*CUSTOM_IMAGE_SIZE + CUSTOM_IMAGE_SIZE
 endstruc
 
@@ -337,16 +371,18 @@ istruc Player
     ; at Player.fire_rate, db 1
     at Player.bullet_xy, times 100 dw 0
     at Player.bullet_index, dw 0  ; b wont work
+    at Player.draw, db 1
     ; at Player.ship_image, incbin "enemy_ship.bin"
 iend
 
 enemy:
 istruc Player
-    at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
-    at Player.ship_y, dw 2 * CUSTOM_IMAGE_SIZE 
+    at Player.ship_x, dw 0 ; WIDTH-CUSTOM_IMAGE_SIZE*2 ; /2 - CUSTOM_IMAGE_SIZE/2
+    at Player.ship_y, dw 0 ; 2 * CUSTOM_IMAGE_SIZE 
     ; at Player.fire_rate, db 1
     at Player.bullet_xy, times 100 dw 0
     at Player.bullet_index, dw 0  ; b wont work
+    at Player.draw, db 1
 iend
 
 
