@@ -1,5 +1,5 @@
 # Disassembler! Sort of a pun. Assembly
-![](https://github.com/hackbacc/disassembler/raw/master/progress.png)  
+![](https://github.com/hackbacc/disassembler/raw/master/progress.gif)  
 
 
 Disassembles enemy ships?!
@@ -92,8 +92,10 @@ https://www.cs.princeton.edu/courses/archive/fall06/cos318/precepts/bochs_tutori
 * structures
 https://www.d.umn.edu/~gshute/asm/data-structures.xhtml 
 https://www.csee.umbc.edu/courses/undergraduate/313/spring05/burt_katz/lectures/Lect10/structuresInAsm.html
+https://stackoverflow.com/questions/26723567/accessing-an-array-of-structs-in-assembly  how to align structures
+
+https://ya-webdesign.com/image/2d-space-ship-png/834235.html images ship
 
 * Timer IVT 1Ch
 http://www.gpcet.ac.in/wp-content/uploads/2018/03/mpi-1-22.pdf
-
-
+https://en.wikipedia.org/wiki/Linear-feedback_shift_register

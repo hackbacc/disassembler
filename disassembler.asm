@@ -23,7 +23,7 @@ mov es, word [GRAPHIC_MEM_A]
 call fill_screen
 ;make non movable objects
 mov word [object_strucs], player
-mov dword [object_strucs + Player_size], enemy
+mov dword [object_strucs + 256], enemy
 
 ;JMP $
 mega_loop:
@@ -86,7 +86,7 @@ mov bx, [object_strucs]
 call draw_bullets
 
 mov al, BG_COLOR
-mov bx, enemy ;[object_strucs + Player_size]
+mov bx, [object_strucs + 256]
 call draw_bullets
 
 ; remove player ship
@@ -205,10 +205,10 @@ move_bullets: ; move in their direction
     
     cmp dx, 0
     JE sub_
-    add [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2 ; check word bounds
+    add [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 1 ; check word bounds
     JMP add_
     sub_:
-    sub [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2 ; check word bounds
+    sub [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 1 ; check word bounds
     add_:
     JC remove_from_array  ; either of add/sub ops is oob
 
@@ -253,14 +253,21 @@ yes_draw:
     
     ; add fire!!
     add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
-    mov si, [bx + Player.bullet_index]
-    cmp [bx + Player.bullet_xy + si], di
-    JE draw_ship_no_fire
 
-    mov word [bx + Player.bullet_xy + si], di
+    mov si, 0 ;[bx + Player.bullet_index]
+    fire_check_loop: ; dont add bullet to array if already present
+        cmp [bx + Player.bullet_xy + si], di
+        JE draw_ship_no_fire
+        add si, 2
+        cmp si, [bx + Player.bullet_index]
+        JLE fire_check_loop
+
+    ; add fire at
+    mov si, [bx + Player.bullet_index]
     add word [bx + Player.bullet_index], 2
     
     draw_ship_no_fire:
+    mov word [bx + Player.bullet_xy + si], di
     pop di
 
     mov cx, 400
@@ -398,8 +405,8 @@ nope:
 ; no code execution after this
 ; bss and data segments
 exit:
-player_ship_image: incbin "ship.bin" 
-enemy_ship_image: incbin "a.bin" 
+player_ship_image: incbin "play_ship.bin" 
+enemy_ship_image: incbin "enem_ship.bin" 
 
 struc Player
     .ship_x: resw 1
@@ -429,7 +436,7 @@ init_objects:
     enemy:
     istruc Player
         at Player.ship_x, dw CUSTOM_IMAGE_SIZE ; WIDTH-CUSTOM_IMAGE_SIZE*2 ; /2 - CUSTOM_IMAGE_SIZE/2
-        at Player.ship_y, dw 0 ; 2 * CUSTOM_IMAGE_SIZE 
+        at Player.ship_y, dw 2 ;2 * CUSTOM_IMAGE_SIZE 
         ; at Player.fire_rate, db 1
         at Player.bullet_xy, times 100 dw 0
         at Player.bullet_index, dw 0  ; b wont work
