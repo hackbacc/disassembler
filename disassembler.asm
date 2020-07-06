@@ -10,6 +10,21 @@ org 0x8000
 
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
+pusha
+
+xor ax, ax
+mov ds, ax
+mov es, ax
+mov di, enemy
+mov si, player
+mov cx, Player_size
+rep movsb
+mov word [enemy+Player.ship_x], CUSTOM_IMAGE_SIZE
+mov word [enemy+Player.ship_y], CUSTOM_IMAGE_SIZE
+
+popa
+
+
 ; init strucs
 ;mov word [object_strucs+Player_size], enemy
 
@@ -22,8 +37,6 @@ mov es, word [GRAPHIC_MEM_A]
 
 call fill_screen
 ;make non movable objects
-mov word [object_strucs], player
-mov dword [object_strucs + 256], enemy
 
 ;JMP $
 mega_loop:
@@ -82,11 +95,11 @@ rep stosb
 
 ; remove bullets
 mov al, BG_COLOR
-mov bx, [object_strucs]
+mov bx, player ;[object_strucs]
 call draw_bullets
 
 mov al, BG_COLOR
-mov bx, [object_strucs + 256]
+mov bx, enemy ;[object_strucs + 256]
 call draw_bullets
 
 ; remove player ship
@@ -99,7 +112,7 @@ call draw_ship
 mov di, BG_COLOR
 ;mov word [object_strucs], player
 ;mov bx, player ; [object_strucs]
-mov bx, [object_strucs]
+mov bx, player ;[object_strucs]
 mov dx, player_ship_image
 call draw_ship
 
@@ -123,7 +136,7 @@ ks_avail:
     JZ move_right
     JMP ks_na
     reset:
-        call init_objects
+        ;call init_objects
     move_down:
         cmp word [player+Player.ship_y], HEIGHT - CUSTOM_IMAGE_SIZE
         JE ks_na
@@ -152,7 +165,7 @@ mov dx, 0xFFFF  ; bullets downward
 call move_bullets
 
 mov si, 0
-mov bx, [object_strucs]
+mov bx, player ;[object_strucs]
 mov dx, 0  ; bullets upward
 call move_bullets
 
@@ -163,7 +176,7 @@ push di
 
 ; DRAWING STUFF
 mov al, 0x04
-mov bx, [object_strucs]
+mov bx, player ;[object_strucs]
 call draw_bullets
 
 mov al, 0x04
@@ -185,7 +198,7 @@ call draw_ship
 
 ;mov di, 0xFFFF
 pop di
-mov bx, [object_strucs]
+mov bx, player ;[object_strucs]
 mov dx, player_ship_image
 call draw_ship
 
@@ -421,7 +434,6 @@ endstruc
 object_strucs: times 100 dw Player_size ; TODO make this dynamic
 object_strucs_index: db 0
 
-init_objects:
     player:
     istruc Player
         at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
@@ -433,16 +445,16 @@ init_objects:
         ; at Player.ship_image, incbin "enemy_ship.bin"
     iend
 
-    enemy:
-    istruc Player
-        at Player.ship_x, dw CUSTOM_IMAGE_SIZE ; WIDTH-CUSTOM_IMAGE_SIZE*2 ; /2 - CUSTOM_IMAGE_SIZE/2
-        at Player.ship_y, dw 2 ;2 * CUSTOM_IMAGE_SIZE 
-        ; at Player.fire_rate, db 1
-        at Player.bullet_xy, times 100 dw 0
-        at Player.bullet_index, dw 0  ; b wont work
-        at Player.draw, db 1
-    iend
-
-    ret
+    enemy: dw Player_size *2
+    ; istruc Player
+    ;     at Player.ship_x, dw CUSTOM_IMAGE_SIZE ; WIDTH-CUSTOM_IMAGE_SIZE*2 ; /2 - CUSTOM_IMAGE_SIZE/2
+    ;     at Player.ship_y, dw 2 ;2 * CUSTOM_IMAGE_SIZE 
+    ;     ; at Player.fire_rate, db 1
+    ;     at Player.bullet_xy, times 100 dw 0
+    ;     at Player.bullet_index, dw 0  ; b wont work
+    ;     at Player.draw, db 1
+    ; iend
+    ;
+    ; ret
 
 times 512*16 - ($-$$) db 0
