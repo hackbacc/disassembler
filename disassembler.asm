@@ -6,10 +6,9 @@ org 0x8000
 %define CUSTOM_IMAGE_SIZE 20 ; 20x20 images only
 %define BG_COLOR 0x00
 %define BULLET_LENGTH 0x05
-%define FRAME_DELAY 0 ;xf240
+%define FRAME_DELAY 0x4240
 %define N_ENEMIES 4
 %define QUANTA_PLAYER_SIZE 0x100
-
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
 pusha
@@ -395,7 +394,7 @@ draw_bullets:
 fill_screen:
     ; xor di, di
     ; mov cx, WIDTH*HEIGHT
-    ; mov al, BG_COLOR
+    ; mov al, 20 ;0x01 ;BG_COLOR
     ; rep stosb
     ; mov si, stone_image
     ; ret
@@ -485,7 +484,7 @@ bullet_collison:
 exit:
 player_ship_image: incbin "play_ship.bin" 
 enemy_ship_image: incbin "enem_ship.bin" 
-stone_image: incbin "stone2.bin" 
+stone_image: incbin "stone3.bin" 
 
 struc Player
     .ship_x: resw 1
