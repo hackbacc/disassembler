@@ -10,8 +10,8 @@ mov cl, 0x02 ; each sec
 mov ch, 0x00 ; cylinder number (first cylinder)
 ;mov dl, xxx ; drive number is auto filled upon reset in dl
 mov dh, 0x00 ; head number (first head)
-mov al, 0x08 ; n of sectors to read
-mov ah, 0x02 ; read disk sectors into memory. 
+mov al, 0x10 ; n of sectors to read
+mov ah, 0x02 ; read disk sectors from drive into memory. 
 mov bx, 0x8000; address of the available user space
 int 0x13
 

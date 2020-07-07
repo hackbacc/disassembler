@@ -6,7 +6,9 @@ org 0x8000
 %define CUSTOM_IMAGE_SIZE 20 ; 20x20 images only
 %define BG_COLOR 0x00
 %define BULLET_LENGTH 0x05
-%define FRAME_DELAY 1240H
+%define FRAME_DELAY 0 ;xf240
+%define N_ENEMIES 4
+%define QUANTA_PLAYER_SIZE 0x100
 
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
@@ -26,21 +28,39 @@ mov word [si+Player.ship_x], CUSTOM_IMAGE_SIZE * 4
 mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
 
 mov di, enemies
-add di, 256
+add di, QUANTA_PLAYER_SIZE
 mov si, player
 mov cx, Player_size
 rep movsb
 
 mov si, enemies
-add si, 256
+add si, QUANTA_PLAYER_SIZE
 mov word [si+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE*5
+mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
+
+mov di, enemies
+add di, QUANTA_PLAYER_SIZE*2
+mov si, player
+mov cx, Player_size
+rep movsb
+
+mov si, enemies
+add si, QUANTA_PLAYER_SIZE*2
+mov word [si+Player.ship_x], CUSTOM_IMAGE_SIZE*6
+mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
+
+mov di, enemies
+add di, QUANTA_PLAYER_SIZE*3
+mov si, player
+mov cx, Player_size
+rep movsb
+
+mov si, enemies
+add si, QUANTA_PLAYER_SIZE*3
+mov word [si+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE*7
 mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
 ;
 popa
-
-
-; init strucs
-;mov word [object_strucs+Player_size], enemy
 
 ; init 320x200 with 256 colors video mode
 mov ah, 0x00
@@ -69,79 +89,25 @@ mega_loop:
     mov ax, 0x8600
     int 0x15
 
-; change entire screen color
-; clears the entire VGA memory space
-    ; xor di, di
-    ; mov cx, WIDTH*HEIGHT
-    ; mov al, 0x0
-    ; rep stosb
-
-; draw boundries
-; left
-xor di,di
-add di, 2
-mov cx, HEIGHT-1
-loopyp:
-    add di, WIDTH
-    mov [es:di], al
-    loop loopyp
-
-;right
-mov cx, WIDTH-1
-mov al, 0x01
-CLD
-rep stosb
-
-; up
-sub di, 2
-mov cx, HEIGHT-1
-loopyn:
-    sub di, WIDTH
-    mov [es:di], al
-    loop loopyn
-
-;left
-mov cx, WIDTH
-mov al, 0x01
-STD
-rep stosb
-;
-
-; remove bullets
-mov al, BG_COLOR
-mov bx, player ;[object_strucs]
-call draw_bullets
-
-mov al, BG_COLOR
-mov bx, enemies ;[object_strucs + 256]
-add bx, 0 ;[object_strucs + 256]
-call draw_bullets
-
-mov al, BG_COLOR
-mov bx, enemies ;[object_strucs + 256]
-add bx, 256 ;[object_strucs + 256]
-call draw_bullets
 
 ; remove player ship
 
-mov di, BG_COLOR
-mov bx, enemies
-add bx, 0 ;[object_strucs + 256]
-mov dx, enemy_ship_image
-call draw_ship
-
-mov di, BG_COLOR
-mov bx, enemies
-add bx, 256 ;[object_strucs + 256]
-mov dx, enemy_ship_image
-call draw_ship
-
-mov di, BG_COLOR
-;mov word [object_strucs], player
-;mov bx, player ; [object_strucs]
-mov bx, player ;[object_strucs]
-mov dx, player_ship_image
-call draw_ship
+; mov cx, N_ENEMIES
+; mov bx, enemies
+; .remove_enemy_ships:
+;     mov di, BG_COLOR
+;     mov dx, enemy_ship_image
+;     pusha
+;     call draw_ship
+;     popa
+;     add bx, QUANTA_PLAYER_SIZE
+;     loop .remove_enemy_ships
+;
+; mov di, BG_COLOR
+; mov bx, player
+; mov dx, player_ship_image
+; call draw_ship
+;
 
 ; check ks
 mov ah, 0x01
@@ -185,82 +151,85 @@ ks_avail:
         inc word [player+Player.ship_x]
         JMP ks_na
 ks_na:
+call fill_screen
 
+; remove bullets
+; mov al, BG_COLOR
+; mov bx, player
+; call draw_bullets
+;
+; mov cx, N_ENEMIES
+; mov bx, enemies
+; .remove_enemy_bullets:
+;     mov al,BG_COLOR
+;     pusha
+;     call draw_bullets
+;     popa
+;     add bx, QUANTA_PLAYER_SIZE
+;     loop .remove_enemy_bullets
+
+mov cx, N_ENEMIES
+mov bx, enemies
+.move_enemy_bullets:
+    mov si, 0
+    mov dx, 0xFFFF
+    pusha
+    call move_bullets
+    popa
+    add bx, QUANTA_PLAYER_SIZE
+    loop .move_enemy_bullets
+
+;
 mov si, 0
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 0 ;[object_strucs + 256]
-mov dx, 0xFFFF  ; bullets downward
+mov bx, player
+mov dx, 0
 call move_bullets
-
-mov si, 0
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 256 ;[object_strucs + 256]
-mov dx, 0xFFFF  ; bullets downward
-call move_bullets
-
-mov si, 0
-mov bx, player ;[object_strucs]
-mov dx, 0  ; bullets upward
-call move_bullets
-
-
-
-; mov si, player
-; mov bx, enemies ;[object_strucs + Player_size]
-; add bx, 256 ;[object_strucs + 256]
-; call bullet_collison
-; push di
 
 ; DRAWING STUFF
 
 ; draw bullets 
 mov al, 0x03
-mov bx, player ;[object_strucs]
+mov bx, player
 call draw_bullets
 
-mov al, 0x02
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 256 ;[object_strucs + 256]
-call draw_bullets
+xor cx, N_ENEMIES
+mov bx, enemies
+.draw_enemy_bullets:
+    mov al, 0x02
+    pusha
+    call draw_bullets
+    popa
+    add bx, QUANTA_PLAYER_SIZE
+    loop .draw_enemy_bullets
 
-mov al, 0x02
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 0 ;[object_strucs + 256]
-call draw_bullets
-;
-mov si, player
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 256 ;[object_strucs + 256]
-call bullet_collison ; updated di == collision
-
-mov si, player
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 0 ;[object_strucs + 256]
-call bullet_collison ; updated di == collision
+mov cx, N_ENEMIES
+mov bx, enemies
+.check_bullet_collison:
+    mov si, player
+    pusha
+    call bullet_collison ; updated di == collision
+    popa
+    add bx, QUANTA_PLAYER_SIZE
+    loop .check_bullet_collison
 
 mov di, 0xFFFF
-mov bx, player ;[object_strucs]
+mov bx, player
 mov dx, player_ship_image
 mov di, 0xFFFF
 call draw_ship
 
-
-mov di, 0xFFFF
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 0 ;[object_strucs + 256]
-mov dx, enemy_ship_image
-;mov di, 0xFFFF
-call draw_ship
-
-
-mov di, 0xFFFF
-;
-mov bx, enemies ;[object_strucs + Player_size]
-add bx, 256 ;[object_strucs + 256]
-mov dx, enemy_ship_image
-;mov di, 0xFFFF
-call draw_ship
-
+mov cx, N_ENEMIES
+mov bx, enemies
+.draw_enemy_ship:
+    mov di, 0xFFFF
+;    mov bx, enemies
+    ;add bx, 0
+    mov dx, enemy_ship_image
+    pusha
+    call draw_ship
+    popa
+    add bx, QUANTA_PLAYER_SIZE
+    loop .draw_enemy_ship
 
 popa
 JMP mega_loop
@@ -272,24 +241,24 @@ move_bullets: ; move in their direction
     ; param dx has bullet direction
     mov di, 0
     cmp di, [bx + Player.bullet_index] ; nothing in array
-    JE move_bullets_nop
+    JE .ret
     cmp si, [bx + Player.bullet_index] ; iterated over entire array
-    JGE move_bullets_nop
+    JGE .ret
     
     cmp dx, 0
-    JE sub_
+    JE .sub_
     add [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2 ; check word bounds
-    JMP add_
-    sub_:
+    JMP .add_
+    .sub_:
     sub [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2 ; check word bounds
-    add_:
-    JC remove_from_array  ; either of add/sub ops is oob
+    .add_:
+    JC .remove_from_array  ; either of add/sub ops is oob
 
     mov ax, word WIDTH * HEIGHT ; check vga bounds
     cmp ax, [bx + Player.bullet_xy + si]
-    JNC dont_remove_from_array 
+    JNC .dont_remove_from_array 
 
-remove_from_array:
+    .remove_from_array:
     ; remove current si from array if it is OOB
     mov di, [bx + Player.bullet_index]
     mov di, [bx + Player.bullet_xy + di - 2]
@@ -297,12 +266,11 @@ remove_from_array:
     sub word [bx + Player.bullet_index], 2
     ;
 
-dont_remove_from_array:
+    .dont_remove_from_array:
     add word si, 2
     JMP move_bullets
     ;
-move_bullets_nop:
-    ; popad
+    .ret:
     ret
 ;
 
@@ -311,138 +279,170 @@ draw_ship:
     ; param bx stores structure
     ; param dx stores image
     ; param di makes color  == BG_COLOR if it is BG COLOR
+
+    ; fill with BG color if not draw
     cmp byte [bx + Player.draw], 0
-    JNE yes_draw
+    JNE .draw
     mov word di, BG_COLOR
-;    JNE yes_draw
-;    pop di
-;    ret
-yes_draw:
-    push di
+
+    .draw:
+    mov cx, di
     xor di, di
     add di, [bx + Player.ship_x]
     mov ax, [bx + Player.ship_y]
-    imul ax, WIDTH
-    add di, ax
-    push di
-    
+    call draw_image
     ; add fire!!
     cmp byte [bx + Player.draw], 0
-    JE draw_ship_no_fire
-    add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
+    JE .draw_ship_WO_fire
 
-    mov si, 0 ;[bx + Player.bullet_index]
-    fire_check_loop: ; dont add bullet to array if already present
+    add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
+    mov si, 0
+
+    .redundant_bullet_check_loop: ; dont add bullet to array if already present
         cmp [bx + Player.bullet_xy + si], di
-        JE draw_ship_no_fire
+        JE .draw_ship_WO_fire
         add si, 2
         cmp si, [bx + Player.bullet_index]
-        JLE fire_check_loop
+        JLE .redundant_bullet_check_loop
 
     ; add fire at
     mov si, [bx + Player.bullet_index]
     add word [bx + Player.bullet_index], 2
-    
-    draw_ship_no_fire:
-    mov word [bx + Player.bullet_xy + si], di
-    pop di
 
+    .draw_ship_WO_fire:
+    mov word [bx + Player.bullet_xy + si], di
+    ;pop di
+    ret
+
+draw_image:
+    ; param di has x
+    ; param ax has y
+    ; param cx is BG color then dont draw
+    ; param dx has image struc
+    imul ax, WIDTH
+    add di, ax
+    push di
+    ;
+
+    push cx
+    cmp cx, BG_COLOR
     mov cx, 400
     mov si, dx
     mov dx, 0
+    JE .ret
     CLD
-    loop_:
+    .loop:
         pop ax
         push ax
-        CMP ax, BG_COLOR
-        JZ dont_load
+;        CMP ax, BG_COLOR
+;        JZ .dont_load
         lodsb ; load byte from [si] to al, inc si
-        dont_load:
+;        .dont_load:
 
-cmp dx, CUSTOM_IMAGE_SIZE ; works for 20x20 images
-        JL same_row
+        cmp dx, CUSTOM_IMAGE_SIZE ; works for 20x20 images
+        JL .same_row
+        
         add di, WIDTH
         sub di, dx
         xor dx, dx
-    same_row:
+        
+        .same_row:
         CLD
         inc dx
         cmp al, BG_COLOR
-        JMP .stos
-        inc di
-        loop loop_
-;        stosb ; save byte from al to [di], inc di
-.stos:
+        JNE .stos
+        mov al, [es:di]
+        .stos:
         stosb
-;        inc dl
-;        JMP
-        ;mov [es:di], byte 0x04 ; works the same as above
-        ;inc di ; --do--
-        loop loop_
+        loop .loop
+    .ret:
     pop di
-    ; popa
+    pop di
     ret
+
 
 ; Draw bullets
 draw_bullets:
     ; param bx contain player struc
+    ; param ax contain color
     mov si, 0
     cmp si, [bx + Player.bullet_index]
-    JZ draw_bullets_ret
+    JZ .ret
 
-draw_bullets_loop:
-    mov di, [bx + Player.bullet_xy + si]
+    .loop:
+        mov di, [bx + Player.bullet_xy + si]
 
-    mov dx, BULLET_LENGTH
-make_bullet:
-    ; cmp di, 0
-    ; JL dont_make_bullet
-    cmp di, 0
-    JE dont_make_bullet
-    mov [es:di], byte al
-    dont_make_bullet:
+        mov dx, BULLET_LENGTH
+        .make_bullet:
+            cmp di, 0
+            JE .dont_make_bullet
+            mov [es:di], byte al
+            .dont_make_bullet:
 
-sub di, WIDTH
+            sub di, WIDTH
 
-    dec dx
-    cmp dx, 0
-    JNZ make_bullet
+            dec dx
+            cmp dx, 0
+            JNZ .make_bullet
 
-    add si, 2
-    cmp si, [bx + Player.bullet_index]
-    JL draw_bullets_loop
+        add si, 2
+        cmp si, [bx + Player.bullet_index]
+        JL .loop
 
-draw_bullets_ret:
-    ; popa
+.ret:
     ret
 
 fill_screen:
-    ; pusha
-    xor di, di
-    mov cx, WIDTH*HEIGHT
-    mov al, BG_COLOR
-    rep stosb
-    ; popa
+    ; xor di, di
+    ; mov cx, WIDTH*HEIGHT
+    ; mov al, BG_COLOR
+    ; rep stosb
+    ; mov si, stone_image
+    ; ret
+    
+   ; draw_image:
+    ; param di has x
+    ; param ax has y
+    ; param cx is BG color then dont draw
+    ; param dx has image struc
+
+    mov ax, 0
+    .draw_stones_y:
+        mov di, 0 ;CUSTOM_IMAGE_SIZE
+        mov si, 0
+        .draw_stones_x:
+            mov dx, stone_image
+            mov cx, 0xFFFF
+            pusha
+            call draw_image
+            popa
+            add di, CUSTOM_IMAGE_SIZE
+            CMP di, WIDTH-CUSTOM_IMAGE_SIZE
+            JLE .draw_stones_x
+        add ax, CUSTOM_IMAGE_SIZE
+        cmp ax, HEIGHT-CUSTOM_IMAGE_SIZE
+        JLE .draw_stones_y
+
     ret
+
 
 bullet_collison:
     ; si param stores, player struc of attacker
     ; bx param stores, player struc of victim
     ; returns di, 0 == no hit, 1 == hit
     pusha
-
     push bp
 
     ; check if no bullets
     mov bp, 0
     cmp bp, [si + Player.bullet_index]
-    JNE do
+    JNE .bullet_loop
     pop bp
     mov di, 0xFFFF
     popa
     ret ; no_collison
 
-    do:
+    .bullet_loop:
         mov ax, [si + Player.bullet_xy + bp] ;, WIDTH ; ax Y dx X
         mov cx, WIDTH
         div cx
@@ -450,19 +450,19 @@ bullet_collison:
 
         mov cx, [bx + Player.ship_x]
         cmp dx, cx
-        JL nope
+        JL .try_next_bullet
         add cx, CUSTOM_IMAGE_SIZE
 
         cmp dx, cx
-        JG nope
+        JG .try_next_bullet
 
         mov cx, [bx + Player.ship_y]
         cmp ax, cx
-        JL nope
+        JL .try_next_bullet
         add cx, CUSTOM_IMAGE_SIZE
 
         cmp ax, cx
-        JG nope
+        JG .try_next_bullet
 
         pop bp
         mov di, BG_COLOR
@@ -470,10 +470,10 @@ bullet_collison:
         popa
         ret ; collison
 
-nope:
+    .try_next_bullet:
         add bp, 2
         cmp bp, [si + Player.bullet_index]
-        JL do
+        JL .bullet_loop
 
         pop bp
         mov di, 0xFFFF
@@ -485,6 +485,7 @@ nope:
 exit:
 player_ship_image: incbin "play_ship.bin" 
 enemy_ship_image: incbin "enem_ship.bin" 
+stone_image: incbin "stone2.bin" 
 
 struc Player
     .ship_x: resw 1
@@ -510,6 +511,8 @@ object_strucs_index: db 0
         ; at Player.ship_image, incbin "enemy_ship.bin"
     iend
 
-    enemies: times 2  dw 256
+    enemies: times N_ENEMIES  dw 256
+%assign sizeOfProgram $ - $$
+%warning Size of the program: sizeOfProgram bytes
 
 times 512*16 - ($-$$) db 0

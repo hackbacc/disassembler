@@ -59,6 +59,7 @@ xxxxxxx                                xxxxxxx               oooxxxx   xxxxxxx
 1. Simple: We can fix the player's ship and change the environment, enemies keep piling up like tetris.
 2. Extended version (DLC?!): The player ship has four degree of freedoms and it can score points based on the number of enemy ships it wrecks!
 3. Extended: Space mines? Environmental factors which can be used.
+4. 45 degree bullets of enemies.
 
 # MISC -
 1. Player stats, high score!
@@ -66,36 +67,36 @@ xxxxxxx                                xxxxxxx               oooxxxx   xxxxxxx
 
 
 ## Resources -
-http://employees.oneonta.edu/higgindm/assembly/video_games.htm
-http://www.skynet.ie/~darkstar/assembler/tut6.html
-http://www.wagemakers.be/english/doc/vga
-http://www.gabrielececchetti.it/Teaching/CalcolatoriElettronici/Docs/i8086_and_DOS_interrupts.pdf
-https://wiki.osdev.org/Drawing_In_Protected_Mode#Locating_Video_Memory
-https://wiki.osdev.org/Printing_to_Screen
-http://mikeos.sourceforge.net/write-your-own-os.html
-https://www.codeproject.com/Articles/664165/Writing-a-boot-loader-in-Assembly-and-C-Part
-http://faydoc.tripod.com/cpu/ Special directives
-https://www.glamenv-septzen.net/en/view/6 why 0x7C00
-http://www.ctyme.com/intr/int.htm interrupts all
-https://montcs.bloomu.edu/Information/LowLevel/assembly64.pdf macro labels %%
+http://employees.oneonta.edu/higgindm/assembly/video_games.htm  
+http://www.skynet.ie/~darkstar/assembler/tut6.html 
+http://www.wagemakers.be/english/doc/vga  
+http://www.gabrielececchetti.it/Teaching/CalcolatoriElettronici/Docs/i8086_and_DOS_interrupts.pdf  
+https://wiki.osdev.org/Drawing_In_Protected_Mode#Locating_Video_Memory  
+https://wiki.osdev.org/Printing_to_Screen  
+http://mikeos.sourceforge.net/write-your-own-os.html  
+https://www.codeproject.com/Articles/664165/Writing-a-boot-loader-in-Assembly-and-C-Part  
+http://faydoc.tripod.com/cpu/ Special directives  
+https://www.glamenv-septzen.net/en/view/6 why 0x7C00  
+http://www.ctyme.com/intr/int.htm interrupts all  
+https://montcs.bloomu.edu/Information/LowLevel/assembly64.pdf macro labels %%  
 
-https://wiki.osdev.org/Interrupt_Vector_Table IVT
-https://nasm.us/doc/nasmdoc0.html HOLY GRAIL OF ASM LANG
-https://www.daniweb.com/programming/software-development/threads/256108/problem-with-nasm-s-times-directive why remove .section segments
-https://0x00sec.org/t/realmode-assembly-writing-bootable-stuff-part-1/2901 this awesome tutorial
+https://wiki.osdev.org/Interrupt_Vector_Table IVT  
+https://nasm.us/doc/nasmdoc0.html HOLY GRAIL OF ASM LANG  
+https://www.daniweb.com/programming/software-development/threads/256108/problem-with-nasm-s-times-directive why remove .section segments  
+https://0x00sec.org/t/realmode-assembly-writing-bootable-stuff-part-1/2901 this awesome tutorial  
 
-https://www.partitionwizard.com/help/what-is-chs.html Cylinder-head-sector
-https://www.pngfind.com/pngs/m/189-1896680_galaga-galaga-ship-hd-png-download.png
-https://thestarman.pcministry.com/linux/bochsrc.bxrc.htm # bochs src file
-https://www.cs.princeton.edu/courses/archive/fall06/cos318/precepts/bochs_tutorial.html # bochs startup setup tutorial
+https://www.partitionwizard.com/help/what-is-chs.html Cylinder-head-sector  
+https://www.pngfind.com/pngs/m/189-1896680_galaga-galaga-ship-hd-png-download.png  
+https://thestarman.pcministry.com/linux/bochsrc.bxrc.htm # bochs src file  
+https://www.cs.princeton.edu/courses/archive/fall06/cos318/precepts/bochs_tutorial.html # bochs startup setup tutorial  
 
 * structures
-https://www.d.umn.edu/~gshute/asm/data-structures.xhtml 
-https://www.csee.umbc.edu/courses/undergraduate/313/spring05/burt_katz/lectures/Lect10/structuresInAsm.html
-https://stackoverflow.com/questions/26723567/accessing-an-array-of-structs-in-assembly  how to align structures
+https://www.d.umn.edu/~gshute/asm/data-structures.xhtml   
+https://www.csee.umbc.edu/courses/undergraduate/313/spring05/burt_katz/lectures/Lect10/structuresInAsm.html  
+https://stackoverflow.com/questions/26723567/accessing-an-array-of-structs-in-assembly  how to align structures  
 
-https://ya-webdesign.com/image/2d-space-ship-png/834235.html images ship
+https://ya-webdesign.com/image/2d-space-ship-png/834235.html images ship  
 
 * Timer IVT 1Ch
-http://www.gpcet.ac.in/wp-content/uploads/2018/03/mpi-1-22.pdf
-https://en.wikipedia.org/wiki/Linear-feedback_shift_register
+http://www.gpcet.ac.in/wp-content/uploads/2018/03/mpi-1-22.pdf  
+https://en.wikipedia.org/wiki/Linear-feedback_shift_register  
