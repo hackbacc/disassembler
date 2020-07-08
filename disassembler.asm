@@ -7,7 +7,7 @@ org 0x8000
 %define BG_COLOR 0x00
 %define BULLET_LENGTH 0x05
 %define FRAME_DELAY 0x4240
-%define N_ENEMIES 4
+%define N_ENEMIES 10
 %define QUANTA_PLAYER_SIZE 0x100
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
@@ -17,47 +17,22 @@ xor ax, ax
 mov ds, ax
 mov es, ax
 
-mov di, enemies
-mov si, player
-mov cx, Player_size
-rep movsb
+mov dx, 0
+mov bx, 0
+.init_enemies:
+    mov di, enemies
+    add di, dx
+    mov si, player
+    mov cx, Player_size
+    rep movsb
+    mov si, enemies
+    add si, dx
+    add dx, QUANTA_PLAYER_SIZE
+    inc bx
+    cmp bx, N_ENEMIES
+    JL .init_enemies
 
-mov si, enemies
-mov word [si+Player.ship_x], CUSTOM_IMAGE_SIZE * 4
-mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
-
-mov di, enemies
-add di, QUANTA_PLAYER_SIZE
-mov si, player
-mov cx, Player_size
-rep movsb
-
-mov si, enemies
-add si, QUANTA_PLAYER_SIZE
-mov word [si+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE*5
-mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
-
-mov di, enemies
-add di, QUANTA_PLAYER_SIZE*2
-mov si, player
-mov cx, Player_size
-rep movsb
-
-mov si, enemies
-add si, QUANTA_PLAYER_SIZE*2
-mov word [si+Player.ship_x], CUSTOM_IMAGE_SIZE*6
-mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
-
-mov di, enemies
-add di, QUANTA_PLAYER_SIZE*3
-mov si, player
-mov cx, Player_size
-rep movsb
-
-mov si, enemies
-add si, QUANTA_PLAYER_SIZE*3
-mov word [si+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE*7
-mov word [si+Player.ship_y], CUSTOM_IMAGE_SIZE
+call draw_map
 ;
 popa
 
@@ -109,47 +84,7 @@ mega_loop:
 ;
 
 ; check ks
-mov ah, 0x01
-int 16h
-JNZ ks_avail
-JMP ks_na
-ks_avail:
-    mov ah, 0x00
-    int 16h
-    cmp al, 'r' ; stop moving
-    JZ reset
-    cmp al, 'w' ; stop moving
-    JZ move_up
-    cmp al, 'a' ; stop moving
-    JZ move_left
-    cmp al, 's' ; stop moving
-    JZ move_down
-    cmp al, 'd' ; stop moving
-    JZ move_right
-    JMP ks_na
-    reset:
-        ;call init_objects
-    move_down:
-        cmp word [player+Player.ship_y], HEIGHT - CUSTOM_IMAGE_SIZE
-        JE ks_na
-        inc word [player+Player.ship_y]
-        JMP ks_na
-    move_left:
-        cmp word [player+Player.ship_x], 0
-        JE ks_na
-        dec word [player+Player.ship_x]
-        JMP ks_na
-    move_up:
-        cmp word [player+Player.ship_y], 0
-        JE ks_na
-        dec word [player+Player.ship_y]
-        JMP ks_na
-    move_right:
-        cmp word [player+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE
-        JE ks_na
-        inc word [player+Player.ship_x]
-        JMP ks_na
-ks_na:
+call process_keystroke
 call fill_screen
 
 ; remove bullets
@@ -232,7 +167,52 @@ mov bx, enemies
 
 popa
 JMP mega_loop
-;reti
+
+process_keystroke:
+    mov ah, 0x01
+    int 16h
+    JZ .ret
+
+    mov ah, 0x00
+    int 16h
+
+    cmp al, 'r' ; stop moving
+    JZ .reset
+    cmp al, 'w' ; stop moving
+    JZ .move_up
+    cmp al, 'a' ; stop moving
+    JZ .move_left
+    cmp al, 's' ; stop moving
+    JZ .move_down
+    cmp al, 'd' ; stop moving
+    JZ .move_right
+    JMP .ret
+    .reset:
+        JMP 0x8000 ; call kernel again
+    .move_down:
+        cmp word [player+Player.ship_y], HEIGHT - CUSTOM_IMAGE_SIZE
+        JE .ret
+        inc word [player+Player.ship_y]
+        JMP .ret
+    .move_left:
+        cmp word [player+Player.ship_x], 0
+        JE .ret
+        dec word [player+Player.ship_x]
+        JMP .ret
+    .move_up:
+        cmp word [player+Player.ship_y], 0
+        JE .ret
+        dec word [player+Player.ship_y]
+        JMP .ret
+    .move_right:
+        cmp word [player+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE
+        JE .ret
+        inc word [player+Player.ship_x]
+        JMP .ret
+    .ret:
+    ret
+
+
 
 move_bullets: ; move in their direction
     ; pushad
@@ -479,12 +459,66 @@ bullet_collison:
         popa
         ret ; no collison
 
+draw_map:
+    push bp
+    mov dx, 0 ; x counter
+    mov bx, 0 ; y counter
+    mov di, 0 ; enemy ship counter
+
+    mov bp, 0
+    mov cx, WIDTH*HEIGHT / 64 ; map size 
+    mov si, map
+    .loop:
+        cmp dx, WIDTH/8 ; + 1
+        JNE .continue
+        mov dx, 0
+        inc bx
+        .continue:
+        lodsb
+        cmp al, 'E'
+        JNE .check_player
+        shl bx, 3
+        shl dx, 3
+        mov [di + enemies + Player.ship_x], dx
+        mov [di + enemies + Player.ship_y], bx
+        mov byte [di + enemies + Player.draw], 1
+        shr bx, 3
+        shr dx, 3
+        add di, QUANTA_PLAYER_SIZE
+        inc bp
+
+        .check_player:
+        cmp al, 'P'
+        JNE .loop_
+        shl bx, 3
+        shl dx, 3
+        mov [player + Player.ship_x], dx
+        mov [player + Player.ship_y], bx
+        mov byte [player + Player.draw], 1
+        shr bx, 3
+        shr dx, 3
+
+        .loop_:
+        inc dx
+        loop .loop
+        
+    .ret:
+    ; cmp bp, 4
+    ; cmp dx, 120
+    ; JLE exit
+    pop bp
+    ret
+
+
 ; no code execution after this
 ; bss and data segments
 exit:
+
+bins:
 player_ship_image: incbin "play_ship.bin" 
 enemy_ship_image: incbin "enem_ship.bin" 
 stone_image: incbin "stone3.bin" 
+map: incbin "map.bin"
 
 struc Player
     .ship_x: resw 1
@@ -506,12 +540,9 @@ object_strucs_index: db 0
         ; at Player.fire_rate, db 1
         at Player.bullet_xy, times 100 dw 0
         at Player.bullet_index, dw 0  ; b wont work
-        at Player.draw, db 1
+        at Player.draw, db 0
         ; at Player.ship_image, incbin "enemy_ship.bin"
     iend
 
     enemies: times N_ENEMIES  dw 256
-%assign sizeOfProgram $ - $$
-%warning Size of the program: sizeOfProgram bytes
-
 times 512*16 - ($-$$) db 0
