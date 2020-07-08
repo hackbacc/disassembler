@@ -48,7 +48,8 @@ call fill_screen
 
 ;JMP $
 mega_loop:
-    pusha
+;    pusha
+call process_keystroke
 
 ; delay
     MOV     CX,  0 ;0FH
@@ -63,44 +64,8 @@ mega_loop:
     mov ax, 0x8600
     int 0x15
 
-
-; remove player ship
-
-; mov cx, N_ENEMIES
-; mov bx, enemies
-; .remove_enemy_ships:
-;     mov di, BG_COLOR
-;     mov dx, enemy_ship_image
-;     pusha
-;     call draw_ship
-;     popa
-;     add bx, QUANTA_PLAYER_SIZE
-;     loop .remove_enemy_ships
-;
-; mov di, BG_COLOR
-; mov bx, player
-; mov dx, player_ship_image
-; call draw_ship
-;
-
 ; check ks
-call process_keystroke
 call fill_screen
-
-; remove bullets
-; mov al, BG_COLOR
-; mov bx, player
-; call draw_bullets
-;
-; mov cx, N_ENEMIES
-; mov bx, enemies
-; .remove_enemy_bullets:
-;     mov al,BG_COLOR
-;     pusha
-;     call draw_bullets
-;     popa
-;     add bx, QUANTA_PLAYER_SIZE
-;     loop .remove_enemy_bullets
 
 mov cx, N_ENEMIES
 mov bx, enemies
@@ -156,8 +121,6 @@ mov cx, N_ENEMIES
 mov bx, enemies
 .draw_enemy_ship:
     mov di, 0xFFFF
-;    mov bx, enemies
-    ;add bx, 0
     mov dx, enemy_ship_image
     pusha
     call draw_ship
@@ -165,9 +128,13 @@ mov bx, enemies
     add bx, QUANTA_PLAYER_SIZE
     loop .draw_enemy_ship
 
-popa
+;popa
 JMP mega_loop
 
+
+
+
+; FUNCTIONS
 process_keystroke:
     mov ah, 0x01
     int 16h
