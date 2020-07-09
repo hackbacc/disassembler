@@ -428,44 +428,57 @@ bullet_collison:
 
 draw_map:
     push bp
+    ; find player
+    mov si, map ; will store player location in map
+    mov cx, WIDTH * HEIGHT / 16
+    .find_player_loop:
+        lodsb 
+        cmp al, 'P'
+        JE .break_player_loop
+        loop .find_player_loop
+    .break_player_loop:
+    ; need to make player as center of the frame
+    ; screen mid = HEIGHT/2 * WIDTH + WIDTH/2 = (HEIGHT + 1) * WIDTH/2 this should be equal to bx, making offset as A - B this is the starting point for map.
+    inc si
+    inc si
+    sub si, ((HEIGHT/4)+1) * (WIDTH/4) / 2
+    
     mov dx, 0 ; x counter
     mov bx, 0 ; y counter
     mov di, 0 ; enemy ship counter
 
-    mov bp, 0
-    mov cx, WIDTH*HEIGHT / 64 ; map size 
-    mov si, map
+    mov cx, WIDTH*HEIGHT / 16 ; map size 
     .loop:
-        cmp dx, WIDTH/8 ; + 1
+        cmp dx, WIDTH/4 ; + 1
         JNE .continue
         mov dx, 0
         inc bx
         .continue:
         lodsb
+        shl bx, 2
+        shl dx, 2
         cmp al, 'E'
         JNE .check_player
-        shl bx, 3
-        shl dx, 3
+
+        ; dec si
+        ; mov byte [si], ' '
+        ; inc si
         mov [di + enemies + Player.ship_x], dx
         mov [di + enemies + Player.ship_y], bx
         mov byte [di + enemies + Player.draw], 1
-        shr bx, 3
-        shr dx, 3
         add di, QUANTA_PLAYER_SIZE
         inc bp
 
         .check_player:
         cmp al, 'P'
         JNE .loop_
-        shl bx, 3
-        shl dx, 3
         mov [player + Player.ship_x], dx
         mov [player + Player.ship_y], bx
         mov byte [player + Player.draw], 1
-        shr bx, 3
-        shr dx, 3
 
         .loop_:
+        shr bx, 2
+        shr dx, 2
         inc dx
         loop .loop
         
@@ -512,4 +525,4 @@ object_strucs_index: db 0
     iend
 
     enemies: times N_ENEMIES  dw 256
-times 512*16 - ($-$$) db 0
+times 512*20 - ($-$$) db 0
