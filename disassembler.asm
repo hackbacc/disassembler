@@ -91,13 +91,6 @@ mov es, word [GRAPHIC_MEM_A]
 ; delay
     MOV     CX,  0 ;0FH
     MOV     DX,  FRAME_DELAY 
-    ; MOV     AH, 86H
-    ; INT     15H
-    ; mov cx, 0 ;2000;FRAME_DELAY
-    ; mov dx, 0
-    ;shr cx, 6
-    ;shl dx, 10
-    ; cx:dx == (2^4)*CX + DX == (2^10)*CX + (2*10)*DX  ~~ 2*CX ms
     mov ax, 0x8600
     int 0x15
 
@@ -182,9 +175,14 @@ mov es, word [GRAPHIC_MEM_A]
     popa
     ;sti
     ;iret
-    ;call reked
-    JMP mega_loop
-    ;JMP exit
+    cmp byte [player + Player.draw], 0
+    JNE mega_loop
+
+    mov word bp, rekd_msg
+    mov cx, rekd_msg_len
+    call write_string
+
+    JMP exit
 
 check_level_n_upgrade:
     ;param ax if 0 means dont test
@@ -199,9 +197,9 @@ check_level_n_upgrade:
         add bx, QUANTA_PLAYER_SIZE
         loop .check_all_enemy_dead
     test ax, ax
-    JNE .ret
-
-    
+    JE .not_end
+    ret
+    .not_end:
     inc byte [level] ; level up
 
     cmp byte [level], 2
@@ -209,6 +207,23 @@ check_level_n_upgrade:
     cmp byte [level], 3
     JE .level3
 
+    mov word bp, won_game
+    mov cx, won_game_len
+    call write_string
+    ;
+    mov byte [player + Player.draw], 1
+    MOV     CX,  50 ;0FH
+    MOV     DX,  FRAME_DELAY 
+    mov ax, 0x8600
+    int 0x15
+
+    JMP exit
+    ;
+    ;return video mode
+    ; mov ah, 0x00
+    ; mov al, 0x13
+    ; int 0x10
+    
     .level1:
     mov byte [level], 1
 
@@ -298,6 +313,17 @@ mov cx, N_ENEMIES
 
 
 .ret:
+    mov word bp, lvlup_msg
+    mov cx, lvlup_msg_len
+    call write_string
+    ;
+    mov byte [player + Player.draw], 1
+    MOV     CX,  20 ;0FH
+    MOV     DX,  FRAME_DELAY 
+    mov ax, 0x8600
+    int 0x15
+
+
     ret
 ; FUNCTIONS
 keyboard_isr:
@@ -326,7 +352,7 @@ keyboard_isr:
     JZ .move_right
     JMP .ret
     .reset:
-        JMP 0x8000 ; call kernel again
+;        JMP 0x8000 ; call kernel again
         JMP .ret
     .pause:
         hlt
@@ -676,19 +702,29 @@ draw_map:
     pop bp
     ret
 
-reked:
-;cli
-    mov ah, 0
-    mov al, 0x03
-    int 0x10
-    mov word bp, rekd_msg
+write_string:
+cli
+    ; JMP .ret
+    ; param bp, msg
+    ; param cx, len
+;    mov ah, 0
+;    mov al, 0x03
+;    int 0x10
+    ; mov word bp, rekd_msg
+    push cx
+    xor di, di
+    mov cx, WIDTH*HEIGHT
+    mov al, 0 ;0x01 ;BG_COLOR
+    rep stosb
+    mov si, stone_image
+    pop cx
 
     mov bx, 0x0004
-    mov cx, rekd_msg_len
-
-    mov dh, 10
-    mov dl, 10
-
+    mov dx, 40
+    sub dx, cx
+    shr dx, 1
+    mov dh, 25/2 
+    ;sub dl, cl
 
     xor ax, ax
     mov es, ax
@@ -699,12 +735,23 @@ reked:
 
     int 10h
     ;JMP exit
+    mov ch, 32
+    mov ah, 1
+    int 10h 
+    sti
     ret
 
 
 ; no code execution after this
 ; bss and data segments
 exit:
+rekd_msg: db "YOU GOT REKD"
+rekd_msg_len equ $-rekd_msg
+won_game: db "YOU DID THE IMPOSSIBLE! YOU WON!!!"
+won_game_len equ $-won_game
+lvlup_msg: db "LEVEL UP!"
+lvlup_msg_len equ $-lvlup_msg
+
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
 bins:
@@ -756,7 +803,5 @@ iend
 
 enemies: times N_ENEMIES  dw 256
 
-rekd_msg: db "1234 1234"
-rekd_msg_len equ $-rekd_msg
 
 times 512*20 - ($-$$) db 0
