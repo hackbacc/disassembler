@@ -6,7 +6,7 @@ org 0x8000
 %define CUSTOM_IMAGE_SIZE 20 ; 20x20 images only
 %define BG_COLOR 0x00
 %define BULLET_LENGTH 0x05
-%define FRAME_DELAY 0x8240
+%define FRAME_DELAY 0xF240
 %define N_ENEMIES 10
 %define QUANTA_PLAYER_SIZE 0x100
 %define KEYBOARD_IVT 0x0024
@@ -36,9 +36,16 @@ mov bx, 0
     cmp bx, N_ENEMIES
     JL .init_enemies
 
-call draw_map
+;mov si, [map]
+; LEA bx, [map1]
+; mov [map], bx
+; call draw_map
+;
+; LEA bx, [enemy_ship_image0]
+; mov [enemy_ship_image], bx
 ;
 popa
+
 
 ; init 320x200 with 256 colors video mode
 mov ah, 0x00
@@ -69,6 +76,10 @@ xor ax, ax
 mov ds, ax
 mov es, ax
 mov es, word [GRAPHIC_MEM_A]
+
+; create level
+mov ax, 0
+call check_level_n_upgrade
 
 ;call fill_screen
 
@@ -121,6 +132,8 @@ mov es, word [GRAPHIC_MEM_A]
 
     ; check ks
     call fill_screen
+    mov ax, 0xFFFF
+    call check_level_n_upgrade
 
 ; popa
 ; iret
@@ -171,20 +184,20 @@ mov es, word [GRAPHIC_MEM_A]
         popa
         add bx, QUANTA_PLAYER_SIZE
         loop .check_bullet_collison
-
-    mov cx, N_ENEMIES
-    mov si, enemies
-    .check_bullet_collison1:
-        mov bx, player
-        pusha
-        call bullet_collison ; updated di == collision
-        popa
-        add si, QUANTA_PLAYER_SIZE
-        loop .check_bullet_collison1
+    ;
+    ; mov cx, N_ENEMIES
+    ; mov si, enemies
+    ; .check_bullet_collison1:
+    ;     mov bx, player
+    ;     pusha
+    ;     call bullet_collison ; updated di == collision
+    ;     popa
+    ;     add si, QUANTA_PLAYER_SIZE
+    ;     loop .check_bullet_collison1
 
     mov di, 0xFFFF
     mov bx, player
-    mov dx, player_ship_image
+    mov dx, [player_ship_image]
     mov di, 0xFFFF
     call draw_ship
 
@@ -192,7 +205,7 @@ mov es, word [GRAPHIC_MEM_A]
     mov bx, enemies
     .draw_enemy_ship:
         mov di, 0xFFFF
-        mov dx, enemy_ship_image
+        mov dx, [enemy_ship_image]
         pusha
         call draw_ship
         popa
@@ -201,8 +214,119 @@ mov es, word [GRAPHIC_MEM_A]
     popa
     ;sti
     ;iret
+
     JMP mega_loop
 
+check_level_n_upgrade:
+    ;param ax if 0 means dont test
+    test ax, ax ; 
+    JE .level1
+
+    mov ax, 0
+    mov bx, enemies
+    mov cx, N_ENEMIES
+    .check_all_enemy_dead:
+        or ax, [bx + Player.draw]
+        add bx, QUANTA_PLAYER_SIZE
+        loop .check_all_enemy_dead
+    test ax, ax
+    JNE .ret
+
+    
+    inc byte [level] ; level up
+
+    cmp byte [level], 2
+    JE .level2
+    cmp byte [level], 3
+    JE .level3
+
+    .level1:
+    mov byte [level], 1
+
+    mov byte [player + Player.fire_rate], 2
+    mov byte [player + Player.bullet_index], 0
+
+    mov cx, N_ENEMIES
+    mov bx, enemies
+    .draw_enemy_ship1:
+        mov byte [bx + Player.fire_rate], 2
+        mov byte [bx + Player.bullet_index], 0
+        add bx, QUANTA_PLAYER_SIZE
+        loop .draw_enemy_ship1
+
+    
+    ; load map
+    LEA bx, [map0]
+    mov [map], bx
+    call draw_map
+
+    ; load enemy ship
+    LEA bx, [enemy_ship_image0]
+    mov [enemy_ship_image], bx
+
+    ; load player ship
+    LEA bx, [player_ship_image0]
+    mov [player_ship_image], bx
+
+
+    mov bx, player
+
+
+    JMP .ret
+
+
+    .level2:
+    mov byte [player + Player.fire_rate], 5
+    mov byte [player + Player.bullet_index], 0
+
+mov cx, N_ENEMIES
+    mov bx, enemies
+    .draw_enemy_ship2:
+        mov byte [bx + Player.fire_rate], 5
+        mov byte [bx + Player.bullet_index], 0
+        add bx, QUANTA_PLAYER_SIZE
+        loop .draw_enemy_ship2
+
+    LEA bx, [map0]
+    mov [map], bx
+    call draw_map
+
+    LEA bx, [enemy_ship_image1]
+    mov [enemy_ship_image], bx
+
+    LEA bx, [player_ship_image1]
+    mov [player_ship_image], bx
+
+    JMP .ret
+
+    .level3:
+    mov byte [player + Player.fire_rate], 10
+    mov byte [player + Player.bullet_index], 0
+
+    mov cx, N_ENEMIES
+    mov bx, enemies
+    .draw_enemy_ship3:
+        mov byte [bx + Player.fire_rate], 10
+        mov byte [bx + Player.bullet_index], 0
+        add bx, QUANTA_PLAYER_SIZE
+        loop .draw_enemy_ship3
+
+LEA bx, [map0]
+    mov [map], bx
+    call draw_map
+
+    LEA bx, [enemy_ship_image2]
+    mov [enemy_ship_image], bx
+
+    LEA bx, [player_ship_image2]
+    mov [player_ship_image], bx
+    mov byte [level], 0
+    mov byte [player + Player.bullet_index], 0
+    JMP .ret
+
+
+.ret:
+    ret
 ; FUNCTIONS
 keyboard_isr:
     pusha
@@ -212,6 +336,8 @@ keyboard_isr:
     JNE .ret
     test al, al
     JE .ret
+
+    mov cx, 3 ;[player + Player.move_speed]
 
     cmp al, 0x13 ; stop moving
     JZ .reset
@@ -236,21 +362,25 @@ keyboard_isr:
         cmp word [player+Player.ship_y], HEIGHT - CUSTOM_IMAGE_SIZE
         JE .ret
         inc word [player+Player.ship_y]
+        loop .move_down
         JMP .ret
     .move_left:
         cmp word [player+Player.ship_x], 0
         JE .ret
         dec word [player+Player.ship_x]
+        loop .move_left
         JMP .ret
     .move_up:
         cmp word [player+Player.ship_y], 0
         JE .ret
         dec word [player+Player.ship_y]
+        loop .move_up
         JMP .ret
     .move_right:
         cmp word [player+Player.ship_x], WIDTH - CUSTOM_IMAGE_SIZE
         JE .ret
         inc word [player+Player.ship_x]
+        loop .move_right
         JMP .ret
 
     .ret:
@@ -272,10 +402,10 @@ move_bullets: ; move in their direction
     
     cmp dx, 0
     JE .sub_
-    add [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2 ; check word bounds
+    add [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH*2 ; check word bounds
     JMP .add_
     .sub_:
-    sub [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH* 2 ; check word bounds
+    sub [bx + Player.bullet_xy + si], word WIDTH * BULLET_LENGTH *2 ; check word bounds
     .add_:
     JC .remove_from_array  ; either of add/sub ops is oob
 
@@ -319,9 +449,10 @@ draw_ship:
     ; add fire!!
     cmp byte [bx + Player.draw], 0
     JE .draw_ship_WO_fire
-
-   cmp byte [bx + Player.bullet_index], BULLET_SPEED
-   JGE .draw_ship_WO_fire
+    
+    mov al, [bx + Player.fire_rate]
+    cmp byte [bx + Player.bullet_index], al ;[bx + Player.fire_rate]
+    JGE .draw_ship_WO_fire
 
     add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
     mov si, 0
@@ -336,11 +467,6 @@ draw_ship:
     ; add fire at
     mov si, [bx + Player.bullet_index]
     add word [bx + Player.bullet_index], 2
-
-    ; cmp word [bx + Player.bullet_index], 4
-    ; JNE .draw_ship_WO_fire
-    ;
-    ; sub word [bx + Player.bullet_index], 1
 
     .draw_ship_WO_fire:
     mov word [bx + Player.bullet_xy + si], di
@@ -518,8 +644,8 @@ bullet_collison:
 draw_map:
     push bp
     ; find player
-    mov si, map ; will store player location in map
-    mov cx, WIDTH * HEIGHT / 16
+    mov si, [map] ; will store player location in map
+    mov cx, WIDTH * HEIGHT / 64
     .find_player_loop:
         lodsb 
         cmp al, 'P'
@@ -528,24 +654,25 @@ draw_map:
     .break_player_loop:
     ; need to make player as center of the frame
     ; screen mid = HEIGHT/2 * WIDTH + WIDTH/2 = (HEIGHT + 1) * WIDTH/2 this should be equal to bx, making offset as A - B this is the starting point for map.
-    inc si
-    inc si
-    sub si, ((HEIGHT/4)+1) * (WIDTH/4) / 2
+;    inc si
+;    inc si
+    sub si, ((HEIGHT/8)+1) * (WIDTH/8) / 2
     
     mov dx, 0 ; x counter
     mov bx, 0 ; y counter
     mov di, 0 ; enemy ship counter
+    mov si, [map]
 
-    mov cx, WIDTH*HEIGHT / 16 ; map size 
+    mov cx, WIDTH*HEIGHT / 64 ; map size 
     .loop:
-        cmp dx, WIDTH/4 ; + 1
+        cmp dx, WIDTH/8 ; + 1
         JNE .continue
         mov dx, 0
         inc bx
         .continue:
         lodsb
-        shl bx, 2
-        shl dx, 2
+        shl bx, 3
+        shl dx, 3
         cmp al, 'E'
         JNE .check_player
 
@@ -566,8 +693,8 @@ draw_map:
         mov byte [player + Player.draw], 1
 
         .loop_:
-        shr bx, 2
-        shr dx, 2
+        shr bx, 3
+        shr dx, 3
         inc dx
         loop .loop
         
@@ -581,16 +708,32 @@ draw_map:
 exit:
 
 bins:
-player_ship_image: incbin "play_ship.bin" 
-enemy_ship_image: incbin "enem_ship.bin" 
+
+level: db 1
+
+player_ship_image: dw 0
+player_ship_image0: incbin "play_ship.bin" 
+player_ship_image1: incbin "play_ship1.bin" 
+player_ship_image2: incbin "play_ship2.bin" 
+
+enemy_ship_image: dw 0
+enemy_ship_image0: incbin "enem_ship.bin" 
+enemy_ship_image1: incbin "enem_ship1.bin" 
+enemy_ship_image2: incbin "enem_ship2.bin" 
+
 stone_image: incbin "stone3.bin" 
-map: incbin "map.bin"
+
+map: dw 0
+map0: incbin "map.bin"
+map1: incbin "map1.bin"
+
 
 struc Player
+    ;.move_speed: resb 1
     .ship_x: resw 1
     .ship_y: resw 1
-    ; .fire_rate: resb 1
-    .bullet_xy: times 100 resw 1
+    .fire_rate: resb 1
+    .bullet_xy: times 50 resw 1
     .bullet_index: resw 1 ;resb wont work
     .draw: resb 1
     ; .ship_image: resb CUSTOM_IMAGE_SIZE*CUSTOM_IMAGE_SIZE + CUSTOM_IMAGE_SIZE
@@ -598,10 +741,11 @@ endstruc
 
 player:
 istruc Player
+   ; at Player.move_speed, db 1
     at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
     at Player.ship_y, dw ( HEIGHT/2 - CUSTOM_IMAGE_SIZE/2 )
-    ; at Player.fire_rate, db 1
-    at Player.bullet_xy, times 100 dw 0
+    at Player.fire_rate, db 1
+    at Player.bullet_xy, times 50 dw 0
     at Player.bullet_index, dw 0  ; b wont work
     at Player.draw, db 0
     ; at Player.ship_image, incbin "enemy_ship.bin"
