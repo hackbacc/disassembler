@@ -6,9 +6,10 @@ org 0x8000
 %define CUSTOM_IMAGE_SIZE 20 ; 20x20 images only
 %define BG_COLOR 0x00
 %define BULLET_LENGTH 0x05
-%define FRAME_DELAY 0x4240
+%define FRAME_DELAY 0x8240
 %define N_ENEMIES 10
 %define QUANTA_PLAYER_SIZE 0x100
+%define KEYBOARD_IVT 0x0024
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
 pusha
@@ -41,15 +42,23 @@ mov ah, 0x00
 mov al, 0x13
 int 0x10
 
+; keyboard isr
+cli
+xor ax, ax
+mov word [KEYBOARD_IVT], keyboard_isr
+mov word [KEYBOARD_IVT+2], ax
+sti
+;
+
 mov es, word [GRAPHIC_MEM_A]
 
 call fill_screen
 ;make non movable objects
 
-;JMP $
+; mov si, 0x002C
+; mov word [si], mega_loop
+; JMP $
 mega_loop:
-;    pusha
-call process_keystroke
 
 ; delay
     MOV     CX,  0 ;0FH
@@ -64,98 +73,100 @@ call process_keystroke
     mov ax, 0x8600
     int 0x15
 
-; check ks
-call fill_screen
+    ; check ks
+    call fill_screen
 
-mov cx, N_ENEMIES
-mov bx, enemies
-.move_enemy_bullets:
+    mov cx, N_ENEMIES
+    mov bx, enemies
+    .move_enemy_bullets:
+        mov si, 0
+        mov dx, 0xFFFF
+        pusha
+        call move_bullets
+        popa
+        add bx, QUANTA_PLAYER_SIZE
+        loop .move_enemy_bullets
+
+    ;
     mov si, 0
-    mov dx, 0xFFFF
-    pusha
+    mov bx, player
+    mov dx, 0
     call move_bullets
-    popa
-    add bx, QUANTA_PLAYER_SIZE
-    loop .move_enemy_bullets
 
-;
-mov si, 0
-mov bx, player
-mov dx, 0
-call move_bullets
+    ; DRAWING STUFF
 
-; DRAWING STUFF
-
-; draw bullets 
-mov al, 0x03
-mov bx, player
-call draw_bullets
-
-xor cx, N_ENEMIES
-mov bx, enemies
-.draw_enemy_bullets:
-    mov al, 0x02
-    pusha
+    ; draw bullets 
+    mov al, 0x03
+    mov bx, player
     call draw_bullets
-    popa
-    add bx, QUANTA_PLAYER_SIZE
-    loop .draw_enemy_bullets
 
-mov cx, N_ENEMIES
-mov bx, enemies
-.check_bullet_collison:
-    mov si, player
-    pusha
-    call bullet_collison ; updated di == collision
-    popa
-    add bx, QUANTA_PLAYER_SIZE
-    loop .check_bullet_collison
+    xor cx, N_ENEMIES
+    mov bx, enemies
+    .draw_enemy_bullets:
+        mov al, 0x02
+        pusha
+        call draw_bullets
+        popa
+        add bx, QUANTA_PLAYER_SIZE
+        loop .draw_enemy_bullets
 
-mov di, 0xFFFF
-mov bx, player
-mov dx, player_ship_image
-mov di, 0xFFFF
-call draw_ship
+    mov cx, N_ENEMIES
+    mov bx, enemies
+    .check_bullet_collison:
+        mov si, player
+        pusha
+        call bullet_collison ; updated di == collision
+        popa
+        add bx, QUANTA_PLAYER_SIZE
+        loop .check_bullet_collison
 
-mov cx, N_ENEMIES
-mov bx, enemies
-.draw_enemy_ship:
     mov di, 0xFFFF
-    mov dx, enemy_ship_image
-    pusha
+    mov bx, player
+    mov dx, player_ship_image
+    mov di, 0xFFFF
     call draw_ship
-    popa
-    add bx, QUANTA_PLAYER_SIZE
-    loop .draw_enemy_ship
 
-;popa
-JMP mega_loop
-
-
-
+    mov cx, N_ENEMIES
+    mov bx, enemies
+    .draw_enemy_ship:
+        mov di, 0xFFFF
+        mov dx, enemy_ship_image
+        pusha
+        call draw_ship
+        popa
+        add bx, QUANTA_PLAYER_SIZE
+        loop .draw_enemy_ship
+    JMP mega_loop
 
 ; FUNCTIONS
-process_keystroke:
-    mov ah, 0x01
-    int 16h
-    JZ .ret
+keyboard_isr:
+    pusha
 
-    mov ah, 0x00
-    int 16h
+    in al, 0x60
+    test al, 0x80
+    JNE .ret
+    test al, al
+    JE .ret
 
-    cmp al, 'r' ; stop moving
+    cmp al, 0x13 ; stop moving
     JZ .reset
-    cmp al, 'w' ; stop moving
+    cmp al, 0x21 ; stop moving
+    JZ .pause
+    cmp al, 0x11 ; stop moving
     JZ .move_up
-    cmp al, 'a' ; stop moving
+    cmp al, 0x1E ; stop moving
     JZ .move_left
-    cmp al, 's' ; stop moving
+    cmp al, 0x1F ; stop moving
     JZ .move_down
-    cmp al, 'd' ; stop moving
+    cmp al, 0x20 ; stop moving
     JZ .move_right
     JMP .ret
     .reset:
         JMP 0x8000 ; call kernel again
+        JMP .ret
+    .pause:
+        hlt
+        JMP .ret
     .move_down:
         cmp word [player+Player.ship_y], HEIGHT - CUSTOM_IMAGE_SIZE
         JE .ret
@@ -176,10 +187,13 @@ process_keystroke:
         JE .ret
         inc word [player+Player.ship_x]
         JMP .ret
+
     .ret:
-    ret
+    mov al, 0x20
+    out 0x20, al
 
-
+    popa
+    iret
 
 move_bullets: ; move in their direction
     ; pushad
@@ -241,6 +255,9 @@ draw_ship:
     cmp byte [bx + Player.draw], 0
     JE .draw_ship_WO_fire
 
+    cmp byte [bx + Player.bullet_index], 2
+    JGE .draw_ship_WO_fire
+
     add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
     mov si, 0
 
@@ -254,6 +271,11 @@ draw_ship:
     ; add fire at
     mov si, [bx + Player.bullet_index]
     add word [bx + Player.bullet_index], 2
+
+    ; cmp word [bx + Player.bullet_index], 4
+    ; JNE .draw_ship_WO_fire
+    ;
+    ; sub word [bx + Player.bullet_index], 1
 
     .draw_ship_WO_fire:
     mov word [bx + Player.bullet_xy + si], di
@@ -339,12 +361,13 @@ draw_bullets:
     ret
 
 fill_screen:
+;    cli
     ; xor di, di
     ; mov cx, WIDTH*HEIGHT
     ; mov al, 20 ;0x01 ;BG_COLOR
     ; rep stosb
     ; mov si, stone_image
-    ; ret
+    ; JMP .ret
     
    ; draw_image:
     ; param di has x
@@ -355,7 +378,7 @@ fill_screen:
     mov ax, 0
     .draw_stones_y:
         mov di, 0 ;CUSTOM_IMAGE_SIZE
-        mov si, 0
+        ;mov si, 0
         .draw_stones_x:
             mov dx, stone_image
             mov cx, 0xFFFF
@@ -369,6 +392,8 @@ fill_screen:
         cmp ax, HEIGHT-CUSTOM_IMAGE_SIZE
         JLE .draw_stones_y
 
+    .ret:
+;    sti
     ret
 
 
@@ -510,19 +535,17 @@ struc Player
     ; .ship_image: resb CUSTOM_IMAGE_SIZE*CUSTOM_IMAGE_SIZE + CUSTOM_IMAGE_SIZE
 endstruc
 
-;enemies: times 2 dw Player_size ; TODO make this dynamic
-object_strucs_index: db 0
+player:
+istruc Player
+    at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
+    at Player.ship_y, dw ( HEIGHT/2 - CUSTOM_IMAGE_SIZE/2 )
+    ; at Player.fire_rate, db 1
+    at Player.bullet_xy, times 100 dw 0
+    at Player.bullet_index, dw 0  ; b wont work
+    at Player.draw, db 0
+    ; at Player.ship_image, incbin "enemy_ship.bin"
+iend
 
-    player:
-    istruc Player
-        at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
-        at Player.ship_y, dw ( HEIGHT/2 - CUSTOM_IMAGE_SIZE/2 )
-        ; at Player.fire_rate, db 1
-        at Player.bullet_xy, times 100 dw 0
-        at Player.bullet_index, dw 0  ; b wont work
-        at Player.draw, db 0
-        ; at Player.ship_image, incbin "enemy_ship.bin"
-    iend
+enemies: times N_ENEMIES  dw 256
 
-    enemies: times N_ENEMIES  dw 256
 times 512*20 - ($-$$) db 0
