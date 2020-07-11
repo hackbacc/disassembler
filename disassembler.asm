@@ -10,6 +10,9 @@ org 0x8000
 %define N_ENEMIES 10
 %define QUANTA_PLAYER_SIZE 0x100
 %define KEYBOARD_IVT 0x0024
+%define RTC_IVT 0x0070 ; 0x1c interrupt * 4
+%define BULLET_SPEED 0x5 ; 0x1c interrupt * 4
+
 GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
 pusha
@@ -42,27 +45,52 @@ mov ah, 0x00
 mov al, 0x13
 int 0x10
 
+xor ax, ax
+mov ds, ax
+mov es, ax
 ; keyboard isr
 cli
 xor ax, ax
 mov word [KEYBOARD_IVT], keyboard_isr
 mov word [KEYBOARD_IVT+2], ax
 sti
+
+;RTC isr
+ cli
+ xor ax, ax
+;  mov dword [RTC_IVT], mega_loop
+;mov word [RTC_IVT+2], ax
+sti
+;
+;cli
 ;
 
+xor ax, ax
+mov ds, ax
+mov es, ax
 mov es, word [GRAPHIC_MEM_A]
 
-call fill_screen
-;make non movable objects
+;call fill_screen
 
-; mov si, 0x002C
-; mov word [si], mega_loop
+; some_loop:
+;  hlt
+   ; JMP some_loop
 ; JMP $
+
 mega_loop:
+     pusha
+xor ax, ax
+mov ds, ax
+mov es, ax
+mov es, word [GRAPHIC_MEM_A]
+     ; hlt
+     ; call fill_screen
+ ;JMP mega_loop
+
 
 ; delay
     MOV     CX,  0 ;0FH
-    MOV     DX, FRAME_DELAY 
+    MOV     DX,  FRAME_DELAY 
     ; MOV     AH, 86H
     ; INT     15H
     ; mov cx, 0 ;2000;FRAME_DELAY
@@ -73,8 +101,29 @@ mega_loop:
     mov ax, 0x8600
     int 0x15
 
+; start delay
+; end delay
+
+; push bp
+; push si
+; mov bp, 200
+; mov si, 200
+; delay2:
+; dec bp
+; nop
+; jnz delay2
+; dec si
+; cmp si,0
+; jnz delay2
+; pop si
+; pop bp
+
+
     ; check ks
     call fill_screen
+
+; popa
+; iret
 
     mov cx, N_ENEMIES
     mov bx, enemies
@@ -110,6 +159,9 @@ mega_loop:
         add bx, QUANTA_PLAYER_SIZE
         loop .draw_enemy_bullets
 
+    ; si param stores, player struc of attacker
+    ; bx param stores, player struc of victim
+    ; returns di, 0 == no hit, 1 == hit
     mov cx, N_ENEMIES
     mov bx, enemies
     .check_bullet_collison:
@@ -119,6 +171,16 @@ mega_loop:
         popa
         add bx, QUANTA_PLAYER_SIZE
         loop .check_bullet_collison
+
+    mov cx, N_ENEMIES
+    mov si, enemies
+    .check_bullet_collison1:
+        mov bx, player
+        pusha
+        call bullet_collison ; updated di == collision
+        popa
+        add si, QUANTA_PLAYER_SIZE
+        loop .check_bullet_collison1
 
     mov di, 0xFFFF
     mov bx, player
@@ -136,6 +198,9 @@ mega_loop:
         popa
         add bx, QUANTA_PLAYER_SIZE
         loop .draw_enemy_ship
+    popa
+    ;sti
+    ;iret
     JMP mega_loop
 
 ; FUNCTIONS
@@ -255,8 +320,8 @@ draw_ship:
     cmp byte [bx + Player.draw], 0
     JE .draw_ship_WO_fire
 
-    cmp byte [bx + Player.bullet_index], 2
-    JGE .draw_ship_WO_fire
+   cmp byte [bx + Player.bullet_index], BULLET_SPEED
+   JGE .draw_ship_WO_fire
 
     add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
     mov si, 0
@@ -361,13 +426,12 @@ draw_bullets:
     ret
 
 fill_screen:
-;    cli
-    ; xor di, di
-    ; mov cx, WIDTH*HEIGHT
-    ; mov al, 20 ;0x01 ;BG_COLOR
-    ; rep stosb
-    ; mov si, stone_image
-    ; JMP .ret
+    xor di, di
+    mov cx, WIDTH*HEIGHT
+    mov al, 20 ;0x01 ;BG_COLOR
+    rep stosb
+    mov si, stone_image
+    JMP .ret
     
    ; draw_image:
     ; param di has x
@@ -508,9 +572,6 @@ draw_map:
         loop .loop
         
     .ret:
-    ; cmp bp, 4
-    ; cmp dx, 120
-    ; JLE exit
     pop bp
     ret
 

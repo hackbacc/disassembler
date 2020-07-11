@@ -98,9 +98,10 @@ https://stackoverflow.com/questions/26723567/accessing-an-array-of-structs-in-as
 https://ya-webdesign.com/image/2d-space-ship-png/834235.html images ship  
 
 * Timer IVT 1Ch
+http://www.ctyme.com/intr/rb-2443.htm
 http://www.gpcet.ac.in/wp-content/uploads/2018/03/mpi-1-22.pdf  
 https://en.wikipedia.org/wiki/Linear-feedback_shift_register  
 
 
-
+https://stackoverflow.com/questions/51693306/registering-interrupt-in-16-bit-x86-assembly/51694601  * KEYBOARD ISR
 https://www.google.com/search?q=using+keyboard+interrupt+assembly&oq=using+keyboard+interrupt+assembly&aqs=chrome..69i57j33l2.10511j0j9&sourceid=chrome&ie=UTF-8
