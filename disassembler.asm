@@ -12,7 +12,6 @@ org 0x8000
 %define KEYBOARD_IVT 0x0024
 %define RTC_IVT 0x0070 ; 0x1c interrupt * 4
 
-
 pusha
 
 xor ax, ax
@@ -71,6 +70,13 @@ mov es, word [GRAPHIC_MEM_A]
 mov ax, 0
 call check_level_n_upgrade
 
+mov word bp, begin_msg
+mov cx, begin_msg_len
+call write_string
+    MOV     CX,  50 ;0FH
+    MOV     DX,  FRAME_DELAY 
+    mov ax, 0x8600
+    int 0x15
 
 ; some_loop:
 ;  hlt
@@ -741,10 +747,15 @@ pusha
 ; no code execution after this
 ; bss and data segments
 exit:
+begin_msg: db "YOU READY?!"
+begin_msg_len equ $-begin_msg
+
 rekd_msg: db "YOU GOT REKD"
 rekd_msg_len equ $-rekd_msg
+
 won_game: db "YOU DID THE IMPOSSIBLE! YOU WON!!!"
 won_game_len equ $-won_game
+
 lvlup_msg: db "LEVEL UP!"
 lvlup_msg_len equ $-lvlup_msg
 
@@ -798,6 +809,5 @@ istruc Player
 iend
 
 enemies: times N_ENEMIES  dw 256
-
 
 times 512*20 - ($-$$) db 0
