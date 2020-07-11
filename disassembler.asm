@@ -79,14 +79,6 @@ call check_level_n_upgrade
 
 mega_loop:
      pusha
-xor ax, ax
-mov ds, ax
-mov es, ax
-mov es, word [GRAPHIC_MEM_A]
-     ; hlt
-     ; call fill_screen
- ;JMP mega_loop
-
 
 ; delay
     MOV     CX,  0 ;0FH
@@ -146,15 +138,15 @@ mov es, word [GRAPHIC_MEM_A]
         add bx, QUANTA_PLAYER_SIZE
         loop .check_bullet_hit_on_enemy
     ;
-    ; mov cx, N_ENEMIES
-    ; mov si, enemies
-    ; .check_bullet_hit_on_player:
-    ;     mov bx, player
-    ;     pusha
-    ;     call bullet_hit
-    ;     popa
-    ;     add si, QUANTA_PLAYER_SIZE
-    ;     loop .check_bullet_hit_on_player
+    mov cx, N_ENEMIES
+    mov si, enemies
+    .check_bullet_hit_on_player:
+        mov bx, player
+        pusha
+        call bullet_hit
+        popa
+        add si, QUANTA_PLAYER_SIZE
+        loop .check_bullet_hit_on_player
 
     mov di, 0xFFFF
     mov bx, player
@@ -182,7 +174,8 @@ mov es, word [GRAPHIC_MEM_A]
     mov cx, rekd_msg_len
     call write_string
 
-    JMP exit
+.some:
+        JMP .some
 
 check_level_n_upgrade:
     ;param ax if 0 means dont test
@@ -212,13 +205,9 @@ check_level_n_upgrade:
     mov word bp, won_game
     mov cx, won_game_len
     call write_string
-    ;
+    
     JMP exit
     ;
-    ;return video mode
-    ; mov ah, 0x00
-    ; mov al, 0x13
-    ; int 0x10
     
     .level1:
     mov byte [level], 1
@@ -251,7 +240,7 @@ check_level_n_upgrade:
     LEA bx, [player_ship_image0]
     mov [player_ship_image], bx
 
-    JMP .ret
+    ret
 
 
     .level2:
@@ -313,7 +302,7 @@ mov cx, N_ENEMIES
     cli
     call write_string
     ;
-    MOV     CX,  40 ;0FH
+    MOV     CX,  50 ;0FH
     MOV     DX,  FRAME_DELAY 
     mov ax, 0x8600
     int 0x15
@@ -337,8 +326,8 @@ keyboard_isr:
 
     cmp al, 0x13 ; stop moving
     JZ .reset
-    cmp al, 0x21 ; stop moving
-    JZ .pause
+    ; cmp al, 0x21 ; stop moving
+    ; JZ .pause
     cmp al, 0x11 ; stop moving
     JZ .move_up
     cmp al, 0x1E ; stop moving
@@ -349,10 +338,18 @@ keyboard_isr:
     JZ .move_right
     JMP .ret
     .reset:
-;        JMP 0x8000 ; call kernel again
-        JMP .ret
-    .pause:
-        hlt
+        mov ax, 0
+        call check_level_n_upgrade
+        mov al, 0x20
+        out 0x20, al
+
+        popa
+        JMP mega_loop
+    ; .pause:
+    ;     hlt
+    mov word bp, lvlup_msg
+    mov cx, lvlup_msg_len
+    call write_string
         JMP .ret
     .move_down:
         cmp word [player+Player.ship_y], HEIGHT - CUSTOM_IMAGE_SIZE
@@ -470,6 +467,7 @@ draw_ship:
     ret
 
 draw_image:
+;cli
     ; param di has x
     ; param ax has y
     ; param cx is BG color then dont draw
@@ -513,6 +511,7 @@ draw_image:
     .ret:
     pop di
     pop di
+    sti
     ret
 
 
@@ -546,15 +545,16 @@ draw_bullets:
         JL .loop
 
 .ret:
+;sti
     ret
 
 fill_screen:
-    xor di, di
-    mov cx, WIDTH*HEIGHT
-    mov al, 20 ;0x01 ;BG_COLOR
-    rep stosb
-    mov si, stone_image
-    JMP .ret
+    ; xor di, di
+    ; mov cx, WIDTH*HEIGHT
+    ; mov al, 20 ;0x01 ;BG_COLOR
+    ; rep stosb
+    ; mov si, stone_image
+    ; JMP .ret
     
    ; draw_image:
     ; param di has x
@@ -700,6 +700,7 @@ draw_map:
     ret
 
 write_string:
+pusha
 ;cli
     ; JMP .ret
     ; param bp, msg
@@ -733,6 +734,7 @@ write_string:
     ; mov ah, 1
     ; int 10h 
  ;   sti
+ popa
     ret
 
 
