@@ -7,7 +7,7 @@ org 0x8000
 %define BG_COLOR 0x00
 %define BULLET_LENGTH 0x05
 %define FRAME_DELAY 0xF240
-%define N_ENEMIES 10
+%define N_ENEMIES 15
 %define QUANTA_PLAYER_SIZE 0x100
 %define KEYBOARD_IVT 0x0024
 %define RTC_IVT 0x0070 ; 0x1c interrupt * 4
@@ -202,6 +202,8 @@ check_level_n_upgrade:
     .not_end:
     inc byte [level] ; level up
 
+    cmp byte [level], 1
+    JE .level1
     cmp byte [level], 2
     JE .level2
     cmp byte [level], 3
@@ -211,12 +213,6 @@ check_level_n_upgrade:
     mov cx, won_game_len
     call write_string
     ;
-    mov byte [player + Player.draw], 1
-    MOV     CX,  50 ;0FH
-    MOV     DX,  FRAME_DELAY 
-    mov ax, 0x8600
-    int 0x15
-
     JMP exit
     ;
     ;return video mode
@@ -308,21 +304,22 @@ mov cx, N_ENEMIES
 
     LEA bx, [player_ship_image2]
     mov [player_ship_image], bx
-    mov byte [level], 0
     JMP .ret
 
 
 .ret:
     mov word bp, lvlup_msg
     mov cx, lvlup_msg_len
+    cli
     call write_string
     ;
-    mov byte [player + Player.draw], 1
-    MOV     CX,  20 ;0FH
+    MOV     CX,  40 ;0FH
     MOV     DX,  FRAME_DELAY 
     mov ax, 0x8600
     int 0x15
-
+    sti
+    ; mov word bp, won_game
+    ; mov cx, won_game_len
 
     ret
 ; FUNCTIONS
@@ -703,20 +700,16 @@ draw_map:
     ret
 
 write_string:
-cli
+;cli
     ; JMP .ret
     ; param bp, msg
     ; param cx, len
-;    mov ah, 0
-;    mov al, 0x03
-;    int 0x10
-    ; mov word bp, rekd_msg
+
     push cx
     xor di, di
     mov cx, WIDTH*HEIGHT
     mov al, 0 ;0x01 ;BG_COLOR
     rep stosb
-    mov si, stone_image
     pop cx
 
     mov bx, 0x0004
@@ -724,8 +717,8 @@ cli
     sub dx, cx
     shr dx, 1
     mov dh, 25/2 
-    ;sub dl, cl
 
+    push es
     xor ax, ax
     mov es, ax
     ;push cs
@@ -734,11 +727,12 @@ cli
     mov al, 1
 
     int 10h
+    pop es
     ;JMP exit
-    mov ch, 32
-    mov ah, 1
-    int 10h 
-    sti
+    ; mov ch, 32
+    ; mov ah, 1
+    ; int 10h 
+ ;   sti
     ret
 
 
