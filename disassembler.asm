@@ -11,9 +11,7 @@ org 0x8000
 %define QUANTA_PLAYER_SIZE 0x100
 %define KEYBOARD_IVT 0x0024
 %define RTC_IVT 0x0070 ; 0x1c interrupt * 4
-%define BULLET_SPEED 0x5 ; 0x1c interrupt * 4
 
-GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
 pusha
 
@@ -36,16 +34,8 @@ mov bx, 0
     cmp bx, N_ENEMIES
     JL .init_enemies
 
-;mov si, [map]
-; LEA bx, [map1]
-; mov [map], bx
-; call draw_map
-;
-; LEA bx, [enemy_ship_image0]
-; mov [enemy_ship_image], bx
 ;
 popa
-
 
 ; init 320x200 with 256 colors video mode
 mov ah, 0x00
@@ -81,7 +71,6 @@ mov es, word [GRAPHIC_MEM_A]
 mov ax, 0
 call check_level_n_upgrade
 
-;call fill_screen
 
 ; some_loop:
 ;  hlt
@@ -112,31 +101,10 @@ mov es, word [GRAPHIC_MEM_A]
     mov ax, 0x8600
     int 0x15
 
-; start delay
-; end delay
-
-; push bp
-; push si
-; mov bp, 200
-; mov si, 200
-; delay2:
-; dec bp
-; nop
-; jnz delay2
-; dec si
-; cmp si,0
-; jnz delay2
-; pop si
-; pop bp
-
-
     ; check ks
     call fill_screen
     mov ax, 0xFFFF
     call check_level_n_upgrade
-
-; popa
-; iret
 
     mov cx, N_ENEMIES
     mov bx, enemies
@@ -177,23 +145,23 @@ mov es, word [GRAPHIC_MEM_A]
     ; returns di, 0 == no hit, 1 == hit
     mov cx, N_ENEMIES
     mov bx, enemies
-    .check_bullet_collison:
+    .check_bullet_hit_on_enemy:
         mov si, player
         pusha
-        call bullet_collison ; updated di == collision
+        call bullet_hit
         popa
         add bx, QUANTA_PLAYER_SIZE
-        loop .check_bullet_collison
+        loop .check_bullet_hit_on_enemy
     ;
     ; mov cx, N_ENEMIES
     ; mov si, enemies
-    ; .check_bullet_collison1:
+    ; .check_bullet_hit_on_player:
     ;     mov bx, player
     ;     pusha
-    ;     call bullet_collison ; updated di == collision
+    ;     call bullet_hit
     ;     popa
     ;     add si, QUANTA_PLAYER_SIZE
-    ;     loop .check_bullet_collison1
+    ;     loop .check_bullet_hit_on_player
 
     mov di, 0xFFFF
     mov bx, player
@@ -214,8 +182,9 @@ mov es, word [GRAPHIC_MEM_A]
     popa
     ;sti
     ;iret
-
+    ;call reked
     JMP mega_loop
+    ;JMP exit
 
 check_level_n_upgrade:
     ;param ax if 0 means dont test
@@ -245,12 +214,15 @@ check_level_n_upgrade:
 
     mov byte [player + Player.fire_rate], 2
     mov byte [player + Player.bullet_index], 0
+    mov byte [player + Player.move_speed], 1
+    mov byte [player + Player.bullet_color], 0x03
 
     mov cx, N_ENEMIES
     mov bx, enemies
     .draw_enemy_ship1:
         mov byte [bx + Player.fire_rate], 2
         mov byte [bx + Player.bullet_index], 0
+        mov byte [bx + Player.bullet_color], 0x02
         add bx, QUANTA_PLAYER_SIZE
         loop .draw_enemy_ship1
 
@@ -268,26 +240,25 @@ check_level_n_upgrade:
     LEA bx, [player_ship_image0]
     mov [player_ship_image], bx
 
-
-    mov bx, player
-
-
     JMP .ret
 
 
     .level2:
-    mov byte [player + Player.fire_rate], 5
+    mov byte [player + Player.fire_rate], 2
     mov byte [player + Player.bullet_index], 0
+    mov byte [player + Player.move_speed], 2
+    mov byte [player + Player.bullet_color], 0x03
 
 mov cx, N_ENEMIES
     mov bx, enemies
     .draw_enemy_ship2:
         mov byte [bx + Player.fire_rate], 5
         mov byte [bx + Player.bullet_index], 0
+        mov byte [bx + Player.bullet_color], 0x04
         add bx, QUANTA_PLAYER_SIZE
         loop .draw_enemy_ship2
 
-    LEA bx, [map0]
+    LEA bx, [map1]
     mov [map], bx
     call draw_map
 
@@ -300,18 +271,20 @@ mov cx, N_ENEMIES
     JMP .ret
 
     .level3:
-    mov byte [player + Player.fire_rate], 10
+    mov byte [player + Player.fire_rate], 2
     mov byte [player + Player.bullet_index], 0
+    mov byte [player + Player.move_speed], 3
 
     mov cx, N_ENEMIES
     mov bx, enemies
     .draw_enemy_ship3:
-        mov byte [bx + Player.fire_rate], 10
+        mov byte [bx + Player.fire_rate], 7
         mov byte [bx + Player.bullet_index], 0
+        mov byte [bx + Player.bullet_color], 0x04
         add bx, QUANTA_PLAYER_SIZE
         loop .draw_enemy_ship3
 
-LEA bx, [map0]
+    LEA bx, [map2]
     mov [map], bx
     call draw_map
 
@@ -321,7 +294,6 @@ LEA bx, [map0]
     LEA bx, [player_ship_image2]
     mov [player_ship_image], bx
     mov byte [level], 0
-    mov byte [player + Player.bullet_index], 0
     JMP .ret
 
 
@@ -337,7 +309,8 @@ keyboard_isr:
     test al, al
     JE .ret
 
-    mov cx, 3 ;[player + Player.move_speed]
+    xor cx, cx
+    mov cl, [player + Player.move_speed]
 
     cmp al, 0x13 ; stop moving
     JZ .reset
@@ -450,8 +423,8 @@ draw_ship:
     cmp byte [bx + Player.draw], 0
     JE .draw_ship_WO_fire
     
-    mov al, [bx + Player.fire_rate]
-    cmp byte [bx + Player.bullet_index], al ;[bx + Player.fire_rate]
+    mov ax, [bx + Player.fire_rate]
+    cmp word [bx + Player.bullet_index], ax ;[bx + Player.fire_rate]
     JGE .draw_ship_WO_fire
 
     add di, CUSTOM_IMAGE_SIZE/2 + WIDTH *CUSTOM_IMAGE_SIZE/2
@@ -535,7 +508,8 @@ draw_bullets:
         .make_bullet:
             cmp di, 0
             JE .dont_make_bullet
-            mov [es:di], byte al
+            mov al, [bx + Player.bullet_color]
+            mov [es:di], al
             .dont_make_bullet:
 
             sub di, WIDTH
@@ -587,7 +561,7 @@ fill_screen:
     ret
 
 
-bullet_collison:
+bullet_hit:
     ; si param stores, player struc of attacker
     ; bx param stores, player struc of victim
     ; returns di, 0 == no hit, 1 == hit
@@ -601,7 +575,7 @@ bullet_collison:
     pop bp
     mov di, 0xFFFF
     popa
-    ret ; no_collison
+    ret ; no_hit
 
     .bullet_loop:
         mov ax, [si + Player.bullet_xy + bp] ;, WIDTH ; ax Y dx X
@@ -629,7 +603,7 @@ bullet_collison:
         mov di, BG_COLOR
         mov byte [bx + Player.draw], 0
         popa
-        ret ; collison
+        ret ; hit
 
     .try_next_bullet:
         add bp, 2
@@ -639,7 +613,7 @@ bullet_collison:
         pop bp
         mov di, 0xFFFF
         popa
-        ret ; no collison
+        ret ; no hit
 
 draw_map:
     push bp
@@ -702,10 +676,36 @@ draw_map:
     pop bp
     ret
 
+reked:
+;cli
+    mov ah, 0
+    mov al, 0x03
+    int 0x10
+    mov word bp, rekd_msg
+
+    mov bx, 0x0004
+    mov cx, rekd_msg_len
+
+    mov dh, 10
+    mov dl, 10
+
+
+    xor ax, ax
+    mov es, ax
+    ;push cs
+    ;pop es
+    mov ah, 0x13
+    mov al, 1
+
+    int 10h
+    ;JMP exit
+    ret
+
 
 ; no code execution after this
 ; bss and data segments
 exit:
+GRAPHIC_MEM_A dw 0xA000 ; wont work as macro
 
 bins:
 
@@ -713,8 +713,8 @@ level: db 1
 
 player_ship_image: dw 0
 player_ship_image0: incbin "play_ship.bin" 
-player_ship_image1: incbin "play_ship1.bin" 
-player_ship_image2: incbin "play_ship2.bin" 
+player_ship_image1: incbin "play_ship.bin" 
+player_ship_image2: incbin "play_ship.bin" 
 
 enemy_ship_image: dw 0
 enemy_ship_image0: incbin "enem_ship.bin" 
@@ -726,14 +726,16 @@ stone_image: incbin "stone3.bin"
 map: dw 0
 map0: incbin "map.bin"
 map1: incbin "map1.bin"
+map2: incbin "map2.bin"
 
 
 struc Player
-    ;.move_speed: resb 1
+    .move_speed: resb 1
+    .bullet_color: resb 1
     .ship_x: resw 1
     .ship_y: resw 1
-    .fire_rate: resb 1
-    .bullet_xy: times 50 resw 1
+    .fire_rate: resw 1
+    .bullet_xy: times 100 resw 1
     .bullet_index: resw 1 ;resb wont work
     .draw: resb 1
     ; .ship_image: resb CUSTOM_IMAGE_SIZE*CUSTOM_IMAGE_SIZE + CUSTOM_IMAGE_SIZE
@@ -741,16 +743,20 @@ endstruc
 
 player:
 istruc Player
-   ; at Player.move_speed, db 1
+    at Player.move_speed, db 2
+    at Player.bullet_color, db 0
     at Player.ship_x, dw WIDTH/2 - CUSTOM_IMAGE_SIZE/2
     at Player.ship_y, dw ( HEIGHT/2 - CUSTOM_IMAGE_SIZE/2 )
-    at Player.fire_rate, db 1
-    at Player.bullet_xy, times 50 dw 0
+    at Player.fire_rate, dw 30
+    at Player.bullet_xy, times 100 dw 0
     at Player.bullet_index, dw 0  ; b wont work
     at Player.draw, db 0
     ; at Player.ship_image, incbin "enemy_ship.bin"
 iend
 
 enemies: times N_ENEMIES  dw 256
+
+rekd_msg: db "1234 1234"
+rekd_msg_len equ $-rekd_msg
 
 times 512*20 - ($-$$) db 0

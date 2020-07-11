@@ -3,6 +3,7 @@ from math import sqrt
 import subprocess
 
 IMG_NAME = 'play_ship1.png'
+IMG_NAME = 'temp.png'
 
 subprocess.check_output('rm -rf '+IMG_NAME.split('.')[0]+'.bin',shell=1)
 colors = Image.open('colors.png')
@@ -15,7 +16,7 @@ for y in range(colors.height):
 
 img = Image.open(IMG_NAME)
 img = img.resize((20, 20))
-#img = ImageOps.flip(img)
+img = ImageOps.flip(img)
 
 img.show()
 img_ = img.load()
