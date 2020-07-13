@@ -150,15 +150,15 @@ forever_loop:
         loop .check_bullet_hit_on_enemy
 
     ; check if bullet of enemy hits player
-    ; mov cx, N_ENEMIES
-    ; mov si, enemies
-    ; .check_bullet_hit_on_player:
-    ;     mov bx, player
-    ;     pusha
-    ;     call bullet_hit
-    ;     popa
-    ;     add si, QUANTA_PLAYER_SIZE
-    ;     loop .check_bullet_hit_on_player
+    mov cx, N_ENEMIES
+    mov si, enemies
+    .check_bullet_hit_on_player:
+        mov bx, player
+        pusha
+        call bullet_hit
+        popa
+        add si, QUANTA_PLAYER_SIZE
+        loop .check_bullet_hit_on_player
     ;
     
     ; draw player ship
@@ -220,23 +220,23 @@ bins:
 level: db 1
 
 player_ship_image: dw 0
-player_ship_image0: incbin "play_ship.bin" 
-player_ship_image1: incbin "play_ship.bin" 
-player_ship_image2: incbin "play_ship.bin" 
+player_ship_image0: incbin "bins/play_ship.bin" 
+player_ship_image1: incbin "bins/play_ship.bin" 
+player_ship_image2: incbin "bins/play_ship.bin" 
 
 enemy_ship_image: dw 0
-enemy_ship_image0: incbin "enem_ship.bin" 
-enemy_ship_image1: incbin "enem_ship1.bin" 
-enemy_ship_image2: incbin "enem_ship2.bin" 
+enemy_ship_image0: incbin "bins/enem_ship.bin" 
+enemy_ship_image1: incbin "bins/enem_ship1.bin" 
+enemy_ship_image2: incbin "bins/enem_ship2.bin" 
 
 stone_image: dw 0
-stone_image0: incbin "stone4.bin" 
-stone_image1: incbin "stone3.bin" 
+stone_image0: incbin "bins/stone4.bin" 
+stone_image1: incbin "bins/stone3.bin" 
 
 map: dw 0
-map0: incbin "map.bin"
-map1: incbin "map1.bin"
-map2: incbin "map2.bin"
+map0: incbin "bins/map.bin"
+map1: incbin "bins/map1.bin"
+map2: incbin "bins/map2.bin"
 
 
 struc Player
