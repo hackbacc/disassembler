@@ -16,6 +16,10 @@ Stream day 11 - incbin bin code is overwritten somehow
 Stream day 14 - stop drawable overflow from the boundary
 Stream day 15 - draw enemy and try collision
 
+
+
+
+
 # OFF stream stuff
 1. Install bochs
 2. Show navigatable upto date code of IO buffer for viewers
@@ -23,4 +27,18 @@ Stream day 15 - draw enemy and try collision
 # Lesson Learned
 overflow of times data - go through entire codebase, other bootloader files too!!
 bullet indexing - RTFM clearly!!
+
+
+
+
+
+
+AGENDA FOR TODAY
+* Document the code.
+* Create better maps
+* makeFile fix
+* Known issues
+
+
+
 
