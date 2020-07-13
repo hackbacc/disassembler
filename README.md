@@ -1,6 +1,11 @@
 # Disassembler
-Game Development in assembly.
-![](https://github.com/hackbacc/disassembler/raw/master/progress.gif)  
+![Twitch Status](https://img.shields.io/twitch/status/markroxor?color=bluevoilet&style=for-the-badge)
+
+Game Development in assembly.  
+
+
+![](https://github.com/markroxor/web-storage/raw/master/disassembler.gif)
+
 
 A plug & play game in assmebly for i386 architecture. All you need is a -  
 Microcontroller with i386 architecture and a display attached to it.
@@ -10,7 +15,7 @@ Microcontroller with i386 architecture and a display attached to it.
 make clean && make run disassembler
 ```
 
-## About the game - 
+## How to play - 
 * Control the player ship using WASD to kill all the enemy ships in vicinity. 
 * You level up when there are no more enemies on the screen left.
 * Difficulty increases with levelling up, number of ships increase, their frequency of firing bullet increase but your ship's speed increases as well.
