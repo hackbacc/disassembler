@@ -1,5 +1,7 @@
 # Disassembler
-![Twitch Status](https://img.shields.io/twitch/status/markroxor?color=bluevoilet&style=for-the-badge)
+
+<a href="https://www.twitch.tv/markroxor" rel="Twitch Status">![Twitch](https://img.shields.io/twitch/status/markroxor?color=bluevoilet&style=for-the-badge)</a>
+
 
 Game Development in assembly.  
 
@@ -27,4 +29,14 @@ make clean && make run disassembler
 
 ## Resource 
 https://github.com/hackbacc/disassembler/raw/master/resources.md
+
+## Known issues
+* Screen flickers a bit.
+* and many more which I dont know..
+
+## Screenshots
+![](https://github.com/markroxor/web-storage/raw/master/level1.png)
+![](https://github.com/markroxor/web-storage/raw/master/level3.png)
+![](https://github.com/markroxor/web-storage/raw/master/won.png)
+
 
