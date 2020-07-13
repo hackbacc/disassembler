@@ -150,15 +150,15 @@ forever_loop:
         loop .check_bullet_hit_on_enemy
 
     ; check if bullet of enemy hits player
-    mov cx, N_ENEMIES
-    mov si, enemies
-    .check_bullet_hit_on_player:
-        mov bx, player
-        pusha
-        call bullet_hit
-        popa
-        add si, QUANTA_PLAYER_SIZE
-        loop .check_bullet_hit_on_player
+    ; mov cx, N_ENEMIES
+    ; mov si, enemies
+    ; .check_bullet_hit_on_player:
+    ;     mov bx, player
+    ;     pusha
+    ;     call bullet_hit
+    ;     popa
+    ;     add si, QUANTA_PLAYER_SIZE
+    ;     loop .check_bullet_hit_on_player
     ;
     
     ; draw player ship
