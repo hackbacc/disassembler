@@ -9,7 +9,7 @@ Game Development in assembly.
 ![](https://github.com/markroxor/web-storage/raw/master/disassembler.gif)
 
 
-A plug & play game in assmebly for i386 architecture. All you need is a -  
+A plug & play game in assembly for i386 architecture. All you need is a -  
 Microcontroller with i386 architecture and a display attached to it.
 
 ## Try running locally using qemu -
