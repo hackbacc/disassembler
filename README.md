@@ -1,6 +1,7 @@
 # Disassembler
 
 <a href="https://www.twitch.tv/hackbacc" rel="Twitch Status">![Twitch](https://img.shields.io/twitch/status/hackbacc?color=bluevoilet&style=for-the-badge)</a>
+[![Awesome](https://awesome.re/badge-flat.svg)](https://awesome.re)
 
 
 Game Development in assembly.  
